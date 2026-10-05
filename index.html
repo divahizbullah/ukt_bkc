@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ujian Kenaikan Tingkat Priode 2 Tahun 2026 BKC Cabang Kabupaten Bogor</title>
+<title>Ujian Kenaikan Tingkat Priode 2 tahun 2026 BKC Cabang Kabupaten Bogor</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -159,6 +159,7 @@ body.pk #secList,body.pl #secRekap{display:none}
 <div><label for="iTgl">Tanggal</label><input id="iTgl" type="date"></div>
 <div><label for="iTempat">Tempat</label><input id="iTempat" placeholder="Dojo / GOR"></div>
 <div><label for="iOrg">Penyelenggara</label><input id="iOrg" placeholder="Nama perguruan"></div>
+<div><label for="iTpl">Link template Excel (Google Drive)</label><input id="iTpl" type="url" placeholder="https://drive.google.com/file/d/..."></div>
 </div>
 </section>
 <section class="card np"><h2>Backup data</h2>
@@ -341,7 +342,7 @@ $("printRekap").onclick=()=>doPrint("pk");
 function msg(t,err){const m=$("msg");m.textContent=t;m.className=err?"e":""}
 
 // info
-[["iNama","nama"],["iTgl","tgl"],["iTempat","tempat"],["iOrg","org"]].forEach(([id,k])=>{$(id).addEventListener("input",e=>{info[k]=e.target.value;save();render()})});
+[["iNama","nama"],["iTgl","tgl"],["iTempat","tempat"],["iOrg","org"],["iTpl","tpl"]].forEach(([id,k])=>{$(id).addEventListener("input",e=>{info[k]=e.target.value;save();render()})});
 
 // form
 const F=["fNama","fDojo","fWil","fPelatih","fTmp","fTgl","fDari","fKe"];
@@ -454,11 +455,19 @@ const dz=$("drop");
 dz.addEventListener("drop",e=>importFile(e.dataTransfer.files[0]));
 
 // excel template / export (format sama dengan import)
+// unduhan: pakai fitur Claude jika tersedia, jika tidak (mis. di Vercel/browser biasa) unduh langsung
+async function getDl(){
+ try{if(window.claude&&typeof window.claude.use==="function"){const d=await window.claude.use("downloads");if(d)return d}}catch(e){}
+ return{save:async({filename,data})=>{
+  const mime=/\.xlsx$/i.test(filename)?"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":/\.json$/i.test(filename)?"application/json":"application/octet-stream";
+  const b=data instanceof Blob?data:new Blob([data],{type:mime}),u=URL.createObjectURL(b),a=document.createElement("a");
+  a.href=u;a.download=filename;a.style.display="none";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),10000);return{status:"saved"}}}
+}
 const HEAD=["Nama","Dojo","Wilayah","Tempat Lahir","Tanggal Lahir","Tingkat Sekarang","Tingkat Tujuan"];
 const tglOut=t=>/^\d{4}-\d{2}-\d{2}$/.test(t||"")?t.slice(8)+"-"+t.slice(5,7)+"-"+t.slice(0,4):(t||"");
 async function saveXlsx(rows,name,withDojo){
  try{
-  const dl=await claude.use("downloads");if(!dl||typeof XLSX==="undefined"){msg("Unduhan tidak tersedia di tampilan ini.",1);return}
+  const dl=await getDl();if(!dl||typeof XLSX==="undefined"){msg("Unduhan tidak tersedia di tampilan ini.",1);return}
   const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([HEAD].concat(rows));
   ws["!cols"]=[{wch:30},{wch:24},{wch:20},{wch:20},{wch:16},{wch:22},{wch:22}];XLSX.utils.book_append_sheet(wb,ws,"Peserta");
   if(withDojo){const w2=XLSX.utils.aoa_to_sheet([["Dojo terdaftar (isi kolom Dojo persis seperti ini)","Wilayah","Pelatih"]].concat(dojos.map(d=>[d.nama,d.wilayah||"",d.pelatih||""])));w2["!cols"]=[{wch:44},{wch:22},{wch:22}];XLSX.utils.book_append_sheet(wb,w2,"Daftar Dojo")}
@@ -466,16 +475,21 @@ async function saveXlsx(rows,name,withDojo){
   await dl.save({filename:name,data:buf});msg("File "+name+" siap disimpan.")
  }catch(e){if(!e||e.code!=="declined")msg("File gagal dibuat/disimpan.",1)}
 }
-$("tplBtn").onclick=()=>saveXlsx([["Contoh Nama Peserta",(dojos[0]&&dojos[0].nama)||"Nama Dojo",(dojos[0]&&dojos[0].wilayah)||"Kabupaten Bogor","Bogor","31-12-2010","Kyu 9 (Putih)","Kyu 8 (Kuning)"]],"Template_Peserta_Ujian_BKC.xlsx",true);
+function tplLink(u){u=String(u||"").trim();if(!/^https:\/\//i.test(u))return"";let m=u.match(/drive\.google\.com\/file\/d\/([\w-]+)/)||(/drive\.google\.com/.test(u)&&u.match(/[?&]id=([\w-]+)/));if(m)return"https://drive.google.com/uc?export=download&id="+m[1];m=u.match(/docs\.google\.com\/spreadsheets\/d\/([\w-]+)/);if(m)return"https://docs.google.com/spreadsheets/d/"+m[1]+"/export?format=xlsx";return u}
+$("tplBtn").onclick=()=>{
+ const u=tplLink(info.tpl);
+ if(u){const a=document.createElement("a");a.href=u;a.target="_blank";a.rel="noopener noreferrer";document.body.appendChild(a);a.click();a.remove();msg("Template dibuka dari Google Drive. Jika tidak terunduh, buka tautan ini di browser: "+u);return}
+ saveXlsx([["Contoh Nama Peserta",(dojos[0]&&dojos[0].nama)||"Nama Dojo",(dojos[0]&&dojos[0].wilayah)||"Kabupaten Bogor","Bogor","31-12-2010","Kyu 9 (Putih)","Kyu 8 (Kuning)"]],"Template_Peserta_Ujian_BKC.xlsx",true)
+};
 $("expBtn").onclick=()=>{if(!data.length){msg("Belum ada data peserta untuk diekspor.",1);return}saveXlsx(data.map(p=>[p.nama,p.dojo,p.wilayah||"",p.tmp||"",tglOut(p.tgl),p.dari,p.ke]),"Data_Peserta_Ujian_BKC.xlsx",true)};
-(async()=>{try{if(await claude.use("downloads"))$("xlRow").hidden=false}catch(e){}})();
+$("xlRow").hidden=false;
 
 // backup / restore
 const bkm=(t,e)=>{const m=$("bkMsg");m.textContent=t;m.style.color=e?"#c8102e":""};
 try{$("bkMail").value=localStorage.getItem("karate_bkmail")||""}catch(e){}
 function bkPack(){let logo="";try{logo=localStorage.getItem("karate_logo")||""}catch(e){}return JSON.stringify({app:"karate-bkc",versi:1,waktu:new Date().toISOString(),data,info,dojos,keluar,logo})}
 async function bkDownload(){
- const dl=await claude.use("downloads");if(!dl){bkm("Unduhan tidak tersedia di tampilan ini.",1);return false}
+ const dl=await getDl();if(!dl){bkm("Unduhan tidak tersedia di tampilan ini.",1);return false}
  const d=new Date(),tg=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
  try{await dl.save({filename:"Backup_Ujian_BKC_"+tg+".json",data:bkPack()});return tg}
  catch(e){if(!e||e.code!=="declined")bkm("File backup gagal disimpan.",1);else bkm("Penyimpanan dibatalkan.",1);return false}
@@ -483,7 +497,7 @@ async function bkDownload(){
 $("bkSave").onclick=async()=>{const r=await bkDownload();if(r)bkm("File backup tersimpan di perangkat Anda. Simpan juga salinannya di tempat aman (Google Drive, flashdisk).")};
 $("bkXlsx").onclick=async()=>{
  try{
-  const dl=await claude.use("downloads");if(!dl||typeof XLSX==="undefined"){bkm("Unduhan tidak tersedia di tampilan ini.",1);return}
+  const dl=await getDl();if(!dl||typeof XLSX==="undefined"){bkm("Unduhan tidak tersedia di tampilan ini.",1);return}
   const wb=XLSX.utils.book_new(),add=(n,rows,w)=>{const ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=w.map(x=>({wch:x}));XLSX.utils.book_append_sheet(wb,ws,n)};
   add("Info Ujian",[["Nama kegiatan",info.nama||""],["Tanggal",tglOut(info.tgl)],["Tempat",info.tempat||""],["Penyelenggara",info.org||""],["Setoran per peserta (Rp)",info.tarif||0]],[26,40]);
   add("Peserta",[HEAD].concat(data.map(p=>[p.nama,p.dojo,p.wilayah||"",p.tmp||"",tglOut(p.tgl),p.dari,p.ke])),[30,24,20,20,16,22,22]);
@@ -513,7 +527,7 @@ $("bkFile").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f)retur
   catch(x){bkm("File bukan backup yang valid dari aplikasi ini.",1)}};r.readAsText(f)};
 
 load();
-$("iNama").value=info.nama||"";$("iTgl").value=info.tgl||"";$("iTempat").value=info.tempat||"";$("iOrg").value=info.org||"";$("iTarif").value=info.tarif||"";
+$("iNama").value=info.nama||"";$("iTgl").value=info.tgl||"";$("iTempat").value=info.tempat||"";$("iOrg").value=info.org||"";$("iTpl").value=info.tpl||"";$("iTarif").value=info.tarif||"";
 render();
 </script>
 <script>
