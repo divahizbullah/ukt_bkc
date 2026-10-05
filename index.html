@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ujian Kenaikan Tingkat Priode 2 tahun 2026 BKC Cabang Kabupaten Bogor</title>
+<title>Ujian Kenaikan Tingkat BKC Cabang Kabupaten Bogor</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 <style>
 :root{--bg:#f3f5f8;--card:#fff;--ink:#14213d;--mute:#5d6b82;--line:#dde2ea;--red:#c8102e;--redbg:#fde8eb;--ok:#0f7b4d;--okbg:#e2f5ec;--warn:#9a5b00;--warnbg:#fff1d6;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -91,7 +92,7 @@ body.pk #secList,body.pl #secRekap{display:none}
 <button class="s" id="pick" type="button">pilih file</button>
 <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden></div>
 <div class="row" id="xlRow" style="margin-top:8px" hidden><button class="s" id="tplBtn" type="button">Unduh Template Excel</button> <button class="s" id="expBtn" type="button">Ekspor Data Peserta (format sama)</button></div>
-<p class="hint">Baris pertama harus berisi judul kolom: <b>Nama</b>, <b>Dojo</b>, <b>Wilayah</b>, <b>Tempat Lahir</b>, <b>Tanggal Lahir</b>, <b>Tingkat Sekarang</b>, <b>Tingkat Tujuan</b>. Format tanggal: 31-12-2010 (hari-bulan-tahun). Dojo harus sudah terdaftar di menu Administrator; Jika kolom Wilayah kosong, wilayah diisi dari data dojo; Pelatih selalu diisi otomatis dari data dojo. Baris dengan dojo yang belum terdaftar ditolak. Biaya ujian dan status pembayaran diatur per dojo di menu Administrator. Contoh: <i>Kyu 9 (Putih)</i> ke <i>Kyu 8 (Kuning)</i>.</p>
+<p class="hint">Baris pertama harus berisi judul kolom: <b>Nama</b>, <b>Dojo</b>, <b>Wilayah</b>, <b>Tempat Lahir</b>, <b>Tanggal Lahir</b>, <b>Tingkat Sekarang</b>, <b>Tingkat Tujuan</b>. Format tanggal: 31-12-2010 (hari-bulan-tahun). Template Excel dari tombol di bawah sudah memakai pilihan (dropdown) untuk Dojo, Tingkat Sekarang, dan Tingkat Tujuan agar tidak salah ketik. Dojo harus sudah terdaftar di menu Administrator; Jika kolom Wilayah kosong, wilayah diisi dari data dojo; Pelatih selalu diisi otomatis dari data dojo. Baris dengan dojo yang belum terdaftar ditolak. Biaya ujian dan status pembayaran diatur per dojo di menu Administrator. Contoh: <i>Kyu 7 (Putih)</i> ke <i>Kyu 6 (Kuning)</i>.</p>
 <div class="row" style="margin-top:8px"><label class="row" style="margin:0"><input type="checkbox" id="append" style="width:auto"> Tambahkan ke data yang sudah ada (tanpa ini, data lama diganti)</label></div>
 <div id="msg" role="status"></div>
 </section>
@@ -109,7 +110,7 @@ body.pk #secList,body.pl #secRekap{display:none}
 <div><label for="fDari">Tingkat sekarang</label><input id="fDari" list="tk"></div>
 <div><label for="fKe">Tingkat tujuan</label><input id="fKe" list="tk"></div>
 </div>
-<datalist id="tk"><option>Kyu 10 (Putih)<option>Kyu 9 (Putih Strip)<option>Kyu 8 (Kuning)<option>Kyu 7 (Oranye)<option>Kyu 6 (Hijau)<option>Kyu 5 (Biru)<option>Kyu 4 (Ungu)<option>Kyu 3 (Cokelat)<option>Kyu 2 (Cokelat)<option>Kyu 1 (Cokelat)<option>Dan 1 (Hitam)</datalist>
+<datalist id="tk"><option>Kyu 7 (Putih)<option>Kyu 6 (Kuning)<option>Kyu 5 (Oranye)<option>Kyu 4 (Hijau)<option>Kyu 3 (Biru)<option>Kyu 2 (Cokelat)<option>Kyu 1 (Cokelat)</datalist>
 <div class="row" style="margin-top:12px"><button class="p" id="save" type="button">Simpan peserta</button><button id="cancel" type="button" hidden>Batal edit</button></div>
 </section>
 
@@ -465,21 +466,39 @@ async function getDl(){
 }
 const HEAD=["Nama","Dojo","Wilayah","Tempat Lahir","Tanggal Lahir","Tingkat Sekarang","Tingkat Tujuan"];
 const tglOut=t=>/^\d{4}-\d{2}-\d{2}$/.test(t||"")?t.slice(8)+"-"+t.slice(5,7)+"-"+t.slice(0,4):(t||"");
+async function buildXlsxDropdown(rows,withDojo){
+ const LV=[...document.querySelectorAll("#tk option")].map(o=>o.textContent),
+  wb=new ExcelJS.Workbook(),ws=wb.addWorksheet("Peserta");
+ ws.columns=[{header:HEAD[0],width:30},{header:HEAD[1],width:26},{header:HEAD[2],width:20},{header:HEAD[3],width:20},{header:HEAD[4],width:16},{header:HEAD[5],width:24},{header:HEAD[6],width:24}];
+ ws.getRow(1).font={bold:true};ws.getRow(1).fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFFDE8EB"}};ws.views=[{state:"frozen",ySplit:1}];
+ rows.forEach(r=>ws.addRow(r));
+ ws.getColumn(5).numFmt="@";
+ if(withDojo){const w2=wb.addWorksheet("Daftar Dojo");w2.columns=[{header:"Dojo terdaftar (pilih di kolom Dojo)",width:44},{header:"Wilayah",width:22},{header:"Pelatih",width:22}];w2.getRow(1).font={bold:true};dojos.forEach(d=>w2.addRow([d.nama,d.wilayah||"",d.pelatih||""]))}
+ const N=1000,lv={type:"list",allowBlank:true,formulae:['"'+LV.join(",")+'"'],showErrorMessage:true,errorStyle:"stop",errorTitle:"Tingkat tidak valid",error:"Pilih salah satu tingkat dari daftar.",showInputMessage:true,promptTitle:"Tingkat",prompt:"Klik tanda panah untuk memilih."};
+ const dj=dojos.length?{type:"list",allowBlank:true,formulae:["'Daftar Dojo'!$A$2:$A$"+(dojos.length+1)],showErrorMessage:true,errorStyle:"stop",errorTitle:"Dojo tidak terdaftar",error:"Pilih dojo dari daftar (sheet Daftar Dojo).",showInputMessage:true,promptTitle:"Dojo",prompt:"Klik tanda panah untuk memilih."}:null;
+ for(let i=2;i<=N;i++){ws.getCell(i,6).dataValidation=lv;ws.getCell(i,7).dataValidation=lv;if(dj&&withDojo)ws.getCell(i,2).dataValidation=dj}
+ return await wb.xlsx.writeBuffer();
+}
 async function saveXlsx(rows,name,withDojo){
  try{
-  const dl=await getDl();if(!dl||typeof XLSX==="undefined"){msg("Unduhan tidak tersedia di tampilan ini.",1);return}
-  const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([HEAD].concat(rows));
-  ws["!cols"]=[{wch:30},{wch:24},{wch:20},{wch:20},{wch:16},{wch:22},{wch:22}];XLSX.utils.book_append_sheet(wb,ws,"Peserta");
-  if(withDojo){const w2=XLSX.utils.aoa_to_sheet([["Dojo terdaftar (isi kolom Dojo persis seperti ini)","Wilayah","Pelatih"]].concat(dojos.map(d=>[d.nama,d.wilayah||"",d.pelatih||""])));w2["!cols"]=[{wch:44},{wch:22},{wch:22}];XLSX.utils.book_append_sheet(wb,w2,"Daftar Dojo")}
-  const buf=XLSX.write(wb,{type:"array",bookType:"xlsx"});
-  await dl.save({filename:name,data:buf});msg("File "+name+" siap disimpan.")
+  const dl=await getDl();if(!dl){msg("Unduhan tidak tersedia di tampilan ini.",1);return}
+  let buf=null,dd=false;
+  if(typeof ExcelJS!=="undefined"){try{buf=await buildXlsxDropdown(rows,withDojo);dd=true}catch(e){buf=null}}
+  if(!buf){
+   if(typeof XLSX==="undefined"){msg("Library Excel gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.",1);return}
+   const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([HEAD].concat(rows));
+   ws["!cols"]=[{wch:30},{wch:24},{wch:20},{wch:20},{wch:16},{wch:22},{wch:22}];XLSX.utils.book_append_sheet(wb,ws,"Peserta");
+   if(withDojo){const w2=XLSX.utils.aoa_to_sheet([["Dojo terdaftar (isi kolom Dojo persis seperti ini)","Wilayah","Pelatih"]].concat(dojos.map(d=>[d.nama,d.wilayah||"",d.pelatih||""])));w2["!cols"]=[{wch:44},{wch:22},{wch:22}];XLSX.utils.book_append_sheet(wb,w2,"Daftar Dojo")}
+   buf=XLSX.write(wb,{type:"array",bookType:"xlsx"});
+  }
+  await dl.save({filename:name,data:buf});msg("File "+name+" siap disimpan."+(dd?" Kolom Dojo, Tingkat Sekarang, dan Tingkat Tujuan berupa pilihan (dropdown).":" (Pilihan dropdown tidak tersedia karena library gagal dimuat.)"))
  }catch(e){if(!e||e.code!=="declined")msg("File gagal dibuat/disimpan.",1)}
 }
 function tplLink(u){u=String(u||"").trim();if(!/^https:\/\//i.test(u))return"";let m=u.match(/drive\.google\.com\/file\/d\/([\w-]+)/)||(/drive\.google\.com/.test(u)&&u.match(/[?&]id=([\w-]+)/));if(m)return"https://drive.google.com/uc?export=download&id="+m[1];m=u.match(/docs\.google\.com\/spreadsheets\/d\/([\w-]+)/);if(m)return"https://docs.google.com/spreadsheets/d/"+m[1]+"/export?format=xlsx";return u}
 $("tplBtn").onclick=()=>{
  const u=tplLink(info.tpl);
  if(u){const a=document.createElement("a");a.href=u;a.target="_blank";a.rel="noopener noreferrer";document.body.appendChild(a);a.click();a.remove();msg("Template dibuka dari Google Drive. Jika tidak terunduh, buka tautan ini di browser: "+u);return}
- saveXlsx([["Contoh Nama Peserta",(dojos[0]&&dojos[0].nama)||"Nama Dojo",(dojos[0]&&dojos[0].wilayah)||"Kabupaten Bogor","Bogor","31-12-2010","Kyu 9 (Putih)","Kyu 8 (Kuning)"]],"Template_Peserta_Ujian_BKC.xlsx",true)
+ saveXlsx([["Contoh Nama Peserta",(dojos[0]&&dojos[0].nama)||"Nama Dojo",(dojos[0]&&dojos[0].wilayah)||"Kabupaten Bogor","Bogor","31-12-2010","Kyu 7 (Putih)","Kyu 6 (Kuning)"]],"Template_Peserta_Ujian_BKC.xlsx",true)
 };
 $("expBtn").onclick=()=>{if(!data.length){msg("Belum ada data peserta untuk diekspor.",1);return}saveXlsx(data.map(p=>[p.nama,p.dojo,p.wilayah||"",p.tmp||"",tglOut(p.tgl),p.dari,p.ke]),"Data_Peserta_Ujian_BKC.xlsx",true)};
 $("xlRow").hidden=false;
