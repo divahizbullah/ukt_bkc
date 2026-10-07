@@ -1,6 +1,30 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+ <!-- Load Supabase JS Client dari CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  // Ganti dengan Project URL & Anon Key dari Dashboard Supabase Anda
+  const SUPABASE_URL = 'https://jgxirszqwsrmessfakjq.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_oaBsZpU4HOdgwxN5wVpZgQ_4zt-GY7u';
+
+  // Inisialisasi Supabase client
+  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // Contoh fungsi untuk mengecek koneksi / mengambil data
+  async function testConnection() {
+    // Ganti 'nama_tabel' dengan nama tabel yang ada di Supabase Anda
+    const { data, error } = await supabase.from('uktbkc').select('*');
+    if (error) {
+      console.error('Error menghubungkan ke Supabase:', error);
+    } else {
+      console.log('Data dari Supabase:', data);
+    }
+  }
+
+  testConnection();
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ujian Kenaikan Tingkat BKC Cabang Kabupaten Bogor</title>
