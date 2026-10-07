@@ -76,6 +76,20 @@ async function importDojoMassal(dataArrayExcel) {
     alert('Berhasil mengimpor seluruh data dojo ke Supabase!');
   }
 }
+ async function loadDataFromSupabase() {
+  const { data, error } = await supabaseClient
+    .from('dojo') // Nama tabel Anda
+    .select('*');
+
+  if (!error && data) {
+    // Tampilkan data ke tabel/daftar di HTML
+    console.log('Data tersinkronisasi dari Supabase:', data);
+    // Masukkan logika untuk merender baris tabel Anda di sini
+  }
+}
+
+// Jalankan saat halaman dibuka
+document.addEventListener('DOMContentLoaded', loadDataFromSupabase);
 </script>
  
 <meta charset="utf-8">
