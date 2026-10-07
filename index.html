@@ -363,11 +363,13 @@ var Cloud=(()=>{
   running=(async()=>{try{const d=diff(),now=()=>new Date().toISOString();badge("Menyimpan…","busy");
    for(const k of WK()){
     for(let i=0;i<d[k].up.length;i+=500){const{error}=await sb.from(TB[k]).upsert(d[k].up.slice(i,i+500).map(x=>({id:x.id,data:x.data,updated_at:now()})),{onConflict:"id"});if(error)throw error}
-    for(let i=0;i<d[k].del.length;i+=200){const{error}=await sb.from(TB[k]).delete().in("id",d[k].del.slice(i,i+200));if(error)throw error}
+    for(let i=0;i<d[k].del.length;i+=200){const ch=d[k].del.slice(i,i+200),{error}=await sb.from(TB[k]).delete().in("id",ch);if(error)throw error;
+     const c=await sb.from(TB[k]).select("id").in("id",ch);if(c.error)throw c.error;
+     if(c.data.length){const e=new Error("row-level security: penghapusan ditolak database");e.code="42501";throw e}}
     snap[k]=d[k].m}
    if(sess&&d.info!==infoSnap){const{error}=await sb.from("bkc_pengaturan").upsert({key:"info",value:JSON.parse(d.info),updated_at:now()},{onConflict:"key"});if(error)throw error;infoSnap=d.info}
-   if(!dirty())ls("karate_dirty",null);badge("Tersimpan di database","ok")
-  }catch(e){fail(e)}finally{running=null}})();return running}
+   if(!dirty())ls("karate_dirty",null);badge("Tersimpan di database","ok");return true
+  }catch(e){fail(e);return false}finally{running=null}})();return running}
  function setLogo(u){if(!sb||!ready||!sess||!u)return;
   sb.from("bkc_pengaturan").upsert({key:"logo",value:{u},updated_at:new Date().toISOString()},{onConflict:"key"}).then(({error})=>{if(error)fail(error);else logoSnap=u})}
  const localState=()=>{const g=(k,d)=>{try{return JSON.parse(ls(k)||d)}catch(e){return JSON.parse(d)}};return{data:g("karate_data","[]"),dojos:g("karate_dojo","[]"),keluar:g("karate_keluar","[]"),req:g("karate_req","[]"),info:g("karate_info","{}")}};
@@ -655,11 +657,12 @@ $("tb").addEventListener("click",e=>{const t=e.target.dataset;
   const a=prompt("Ajukan penghapusan \""+q.nama+"\" (dojo "+q.dojo+") ke admin.\nAlasan (boleh dikosongkan):");if(a===null)return;
   hapusReq.push({id:Date.now()+Math.random().toString(36).slice(2,8),pid:q.id,nama:q.nama,dojo:q.dojo,wilayah:q.wilayah||"",ke:q.ke||"",alasan:a.trim(),tgl:new Date().toISOString(),status:"menunggu"});
   save();render();alert("Permintaan dikirim. Peserta baru dihapus setelah admin menyetujui.")}});
-$("nList").onclick=e=>{const t=e.target.dataset,id=t.ok||t.no;if(!logged||!id)return;
+$("nList").onclick=async e=>{const t=e.target.dataset,id=t.ok||t.no;if(!logged||!id)return;
  const r=hapusReq.find(x=>x.id===id);if(!r||r.status!=="menunggu")return;const ok=!!t.ok;
  if(ok&&!confirm("Setujui dan hapus peserta "+r.nama+"?"))return;
  if(ok)data=data.filter(x=>x.id!==r.pid);
- hapusReq=hapusReq.map(x=>x.id===id?{...x,status:ok?"disetujui":"ditolak",tglKeputusan:new Date().toISOString()}:x);save();render()};
+ hapusReq=hapusReq.map(x=>x.id===id?{...x,status:ok?"disetujui":"ditolak",tglKeputusan:new Date().toISOString()}:x);save();render();
+ if(ok&&window.Cloud){const g=await Cloud.flush();if(g===false)alert("Peserta sudah hilang dari layar, tetapi database menolak penghapusan (admin belum punya izin hapus di tabel bkc_peserta). Jalankan SQL izin hapus di Supabase; penghapusan akan terkirim otomatis setelah itu.")}};
 $("print").onclick=()=>doPrint("pl");
 
 // excel import
