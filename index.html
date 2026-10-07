@@ -24,7 +24,45 @@
   }
 
   testConnection();
+ // Fungsi untuk menyimpan data Pendaftaran Dojo tunggal
+async function simpanDojo(event) {
+  event.preventDefault(); // Mencegah form reload/refresh
+
+  // Ambil nilai dari input HTML (pastikan ID elemen sesuai dengan yang ada di index.html)
+  const namaDojo = document.getElementById('input-nama-dojo').value;
+  const wilayah = document.getElementById('input-wilayah').value;
+  const namaPelatih = document.getElementById('input-nama-pelatih').value;
+  const kontak = document.getElementById('input-kontak').value;
+  const emailPelatih = document.getElementById('input-email-pelatih').value;
+  const biayaUjian = document.getElementById('input-biaya-ujian').value;
+  const statusPembayaran = document.getElementById('select-status-pembayaran').value;
+
+  // Kirim data ke tabel 'dojo' di Supabase
+  const { data, error } = await supabaseClient
+    .from('dojo')
+    .insert([
+      {
+        nama_dojo: namaDojo,
+        wilayah: wilayah,
+        nama_pelatih: namaPelatih,
+        kontak: kontak,
+        email_pelatih: emailPelatih,
+        biaya_ujian: parseInt(biayaUjian) || 0,
+        status_pembayaran: statusPembayaran
+      }
+    ]);
+
+  if (error) {
+    console.error('Gagal menyimpan dojo:', error);
+    alert('Gagal menyimpan dojo: ' + error.message);
+  } else {
+    alert('Data Dojo berhasil disimpan ke Supabase!');
+    // Bersihkan isi form setelah berhasil
+    document.getElementById('form-pendaftaran-dojo').reset();
+  }
+}
 </script>
+ 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ujian Kenaikan Tingkat BKC Cabang Kabupaten Bogor</title>
