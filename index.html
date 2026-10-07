@@ -88,7 +88,7 @@ body.pk #secList,body.pl #secRekap{display:none}
 <body>
 <div id="loginBox" class="np" hidden><form id="loginForm" class="card" style="width:100%;max-width:340px">
 <h2>Masuk</h2><p class="hint" style="margin:0 0 12px">Data tersimpan di database. Masuk dengan akun admin.</p>
-<label for="lgEmail">Email</label><input id="lgEmail" type="email" autocomplete="username" required>
+<label for="lgEmail">Username atau email</label><input id="lgEmail" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required>
 <label for="lgPass" style="margin-top:10px">Kata sandi</label><input id="lgPass" type="password" autocomplete="current-password" required>
 <button class="p" style="margin-top:14px;width:100%" type="submit">Masuk</button><div id="lgMsg" class="m e" role="alert"></div>
 </form></div>
@@ -249,6 +249,7 @@ body.pk #secList,body.pl #secRekap{display:none}
 // ===== Sinkronisasi database (Supabase) =====
 const SUPABASE_URL='https://jgxirszqwsrmessfakjq.supabase.co';
 const SUPABASE_ANON_KEY='sb_publishable_oaBsZpU4HOdgwxN5wVpZgQ_4zt-GY7u';
+const LOGIN_DOMAIN="bkc.local"; // username "admin" dikirim ke Supabase sebagai admin@bkc.local
 const WAJIB_LOGIN=true; // true = wajib login (disarankan, data berisi data pribadi peserta)
 var Cloud=(()=>{
  const TB={data:"bkc_peserta",dojos:"bkc_dojo",keluar:"bkc_pengeluaran"},KEYS=Object.keys(TB),J=JSON.stringify,$=id=>document.getElementById(id);
@@ -343,8 +344,8 @@ var Cloud=(()=>{
   if(!sb){badge("Mode lokal (library database gagal dimuat)","err");return}
   if(WAJIB_LOGIN){
    $("loginForm").onsubmit=async e=>{e.preventDefault();const m=$("lgMsg");m.textContent="";
-    const{error}=await sb.auth.signInWithPassword({email:$("lgEmail").value.trim(),password:$("lgPass").value});
-    if(error){m.textContent="Email atau kata sandi salah.";return}
+    const{error}=await sb.auth.signInWithPassword({email:(v=>v.includes("@")?v:v+"@"+LOGIN_DOMAIN)($("lgEmail").value.trim().toLowerCase()),password:$("lgPass").value});
+    if(error){m.textContent="Username/email atau kata sandi salah.";return}
     $("lgPass").value="";$("loginBox").hidden=true;go()};
    $("cloudOut").onclick=async()=>{
     if(dirty()&&!confirm("Ada perubahan yang belum tersimpan ke database. Tetap keluar?"))return;
