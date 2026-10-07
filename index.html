@@ -280,6 +280,11 @@ body.anon .avw .dot{background:var(--mute)}
 <section class="card np"><h2>Dojo terdaftar</h2>
 <div class="tw"><table><thead><tr><th>No</th><th>Dojo</th><th>Wilayah</th><th>Pelatih</th><th>Kontak</th><th class="n">Peserta</th><th class="n">Biaya ujian</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="ab"></tbody></table></div>
 </section>
+<section class="card np" id="secKelola">
+<div class="row" style="margin-bottom:8px"><h2 style="margin:0">Kelola peserta</h2><span class="sp"></span><input id="qa" placeholder="Cari nama / dojo" style="max-width:200px"><button id="clearAll" type="button" style="color:var(--red);border-color:var(--red)">Hapus semua</button></div>
+<p class="hint" style="margin:0 0 10px">Khusus admin. Edit membuka form di menu Peserta. Hapus semua menghapus seluruh data peserta dan tidak bisa dibatalkan.</p>
+<div class="tw"><table><thead><tr><th>No</th><th>Nama</th><th>Dojo</th><th>Wilayah</th><th>Tempat, tanggal lahir</th><th>Tingkat tujuan</th><th>Aksi</th></tr></thead><tbody id="tba"></tbody><tfoot id="tfa"></tfoot></table></div>
+</section>
 </div>
 <div id="vNot" hidden>
 <section class="card np"><h2>Permintaan penghapusan peserta</h2>
@@ -449,6 +454,23 @@ function renderNot(){
  const h=hapusReq.filter(r=>r.status!=="menunggu").sort((a,c)=>(c.tglKeputusan||c.tgl||"").localeCompare(a.tglKeputusan||a.tgl||"")).slice(0,30);
  $("nHist").innerHTML=h.length?h.map(r=>`<tr><td>${esc(fWaktu(r.tglKeputusan||r.tgl))}</td><td>${esc(r.nama)}</td><td>${esc(r.dojo)}</td><td><span class="b ${r.status==="disetujui"?"l":"u"}">${r.status==="disetujui"?"Disetujui":"Ditolak"}</span></td></tr>`).join(""):'<tr><td colspan="4" class="empty">Belum ada riwayat.</td></tr>';
 }
+// ===== Kelola peserta (admin) =====
+function renderKelola(){
+ const k=$("qa").value.toLowerCase(),l=data.filter(p=>!k||(p.nama+" "+p.dojo).toLowerCase().includes(k));
+ $("tba").innerHTML=l.length?l.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nama)}</td><td>${esc(p.dojo)}</td><td>${esc(p.wilayah)}</td><td>${esc(ttl(p))}</td><td>${esc(p.ke)}</td><td><button class="s" data-e="${p.id}">Edit</button> <button class="s" data-d="${p.id}">Hapus</button></td></tr>`).join(""):`<tr><td colspan="7" class="empty">${data.length?"Tidak ada peserta yang cocok.":"Belum ada peserta."}</td></tr>`;
+ $("tfa").innerHTML=`<tr><td colspan="7">Total (${l.length} peserta)</td></tr>`;
+}
+const gagalHapus=()=>alert("Data sudah hilang dari layar, tetapi database menolak penghapusan (admin belum punya izin hapus di tabel bkc_peserta). Jalankan SQL izin hapus di Supabase; penghapusan akan terkirim otomatis setelah itu.");
+$("qa").oninput=renderKelola;
+$("tba").onclick=async e=>{const t=e.target.dataset;if(!logged)return;
+ if(t.e){$("tb").onclick({target:{dataset:{e:t.e}}});tab("Pes");$("fTitle").scrollIntoView({behavior:"smooth",block:"start"})}
+ if(t.d&&confirm("Hapus peserta ini?")){data=data.filter(x=>x.id!==t.d);save();render();if(window.Cloud&&await Cloud.flush()===false)gagalHapus()}};
+$("clearAll").onclick=async()=>{if(!logged)return;
+ if(!data.length){alert("Belum ada data peserta.");return}
+ if(!confirm("Hapus SEMUA "+data.length+" peserta? Tindakan ini tidak bisa dibatalkan. Sebaiknya unduh backup dulu."))return;
+ const t=prompt("Ketik HAPUS (huruf besar) untuk memastikan.");if(t===null)return;
+ if(t.trim()!=="HAPUS"){alert("Dibatalkan: kata konfirmasi tidak cocok.");return}
+ data=[];save();render();if(window.Cloud&&await Cloud.flush()===false)gagalHapus()};
 // ===== Dashboard peserta =====
 let lvMode="ke",dojAll=false;
 const BELT=[["putih","#f3f4f6"],["kuning","#f5c518"],["oranye","#f08a1c"],["orange","#f08a1c"],["hijau","#2e9b4f"],["biru","#2563c9"],["cokelat","#7a4a21"],["coklat","#7a4a21"],["merah","#c8102e"],["hitam","#1f2937"]];
@@ -493,7 +515,7 @@ function render(){
  $("rb").innerHTML=rows.length?rows.map((o,i)=>`<tr><td>${i+1}</td><td>${esc(o.nm)}</td><td>${esc([...o.wl].join(", "))}</td><td>${esc([...o.pl].join(", "))}</td><td class="n">${o.n}</td><td class="n">${rp(o.uj)}</td><td class="n"><b>${rp(o.tot)}</b></td><td class="n">${rp(o.lns)}</td><td class="n">${rp(o.tot-o.lns)}</td><td class="np"><button class="s" data-kw="${esc(o.key)}">Kwitansi</button> <button class="s" data-em="${esc(o.key)}">Email</button></td></tr>`).join(""):`<tr><td colspan="10" class="empty">Belum ada data. Rekap muncul setelah peserta diimport.</td></tr>`;
  const s=f=>rows.reduce((a,o)=>a+o[f],0);
  $("rf").innerHTML=`<tr><td colspan="4">Total (${rows.length} dojo)</td><td class="n">${s("n")}</td><td class="n">${rp(s("uj"))}</td><td class="n">${rp(s("tot"))}</td><td class="n">${rp(s("lns"))}</td><td class="n">${rp(s("tot")-s("lns"))}</td><td class="np"></td></tr>`;
- renderAdm();renderSet();renderDet();renderDash();renderNot();
+ renderAdm();renderSet();renderDet();renderDash();renderNot();renderKelola();
 }
 function refreshSel(){const v=$("fDojo").value;$("fDojo").innerHTML='<option value="">Pilih dojo</option>'+dojos.map(d=>`<option>${esc(d.nama)}</option>`).join("");$("fDojo").value=v;$("noDojo").hidden=dojos.length>0}
 function renderAdm(){
