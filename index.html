@@ -61,6 +61,21 @@ async function simpanDojo(event) {
     document.getElementById('form-pendaftaran-dojo').reset();
   }
 }
+ // Contoh dataArrayExcel hasil parse dari file Excel
+// dataArrayExcel = [{ nama_dojo: 'Dojo A', wilayah: 'Bogor', ... }, { nama_dojo: 'Dojo B', ... }]
+
+async function importDojoMassal(dataArrayExcel) {
+  const { data, error } = await supabaseClient
+    .from('dojo')
+    .insert(dataArrayExcel); // Supabase mendukung batch insert otomatis
+
+  if (error) {
+    console.error('Gagal import massal:', error);
+    alert('Gagal import massal: ' + error.message);
+  } else {
+    alert('Berhasil mengimpor seluruh data dojo ke Supabase!');
+  }
+}
 </script>
  
 <meta charset="utf-8">
