@@ -90,6 +90,28 @@ async function importDojoMassal(dataArrayExcel) {
 
 // Jalankan saat halaman dibuka
 document.addEventListener('DOMContentLoaded', loadDataFromSupabase);
+ <!-- Tambahkan onsubmit="simpanDojo(event)" pada form -->
+<form id="form-pendaftaran-dojo" onsubmit="simpanDojo(event)">
+  <!-- Input fields -->
+  <button type="submit">Simpan dojo</button>
+</form>
+ // Fungsi untuk menarik data dari Supabase dan menampilkannya
+async function muatDataDojo() {
+  const { data, error } = await supabaseClient
+    .from('uktbkc')
+    .select('*');
+
+  if (error) {
+    console.error('Gagal memuat data dari Supabase:', error);
+    return;
+  }
+
+  console.log('Data tersimpan di Supabase:', data);
+  // Di sini Anda bisa memanggil fungsi untuk merender baris data ke tabel HTML
+}
+
+// Jalankan saat halaman selesai dimuat
+document.addEventListener('DOMContentLoaded', muatDataDojo);
 </script>
  
 <meta charset="utf-8">
