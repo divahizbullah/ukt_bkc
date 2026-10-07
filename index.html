@@ -67,7 +67,7 @@ th{color:#000}.b{background:none!important;color:#000!important;padding:0}
 .warn{color:var(--red);font-size:12px}
 #secDet{display:none}body.pd #secDet{display:block}body.pd #secRekap{display:none}
 body.pw #secKw{display:block}body.pw #secRekap{display:none}
-body.pk #secList,body.pl #secRekap{display:none}
+body.pk #secList,body.pk #secView,body.pl #secRekap{display:none}
 #secRekap table,#secLap table{min-width:0}
 #secKw{display:none}#secKw table{min-width:0}
 .kwt{min-width:0;margin:10px 0}.kwt td{border:0;padding:4px 6px;vertical-align:top;font-size:13px}
@@ -99,47 +99,16 @@ body.pk #secList,body.pl #secRekap{display:none}
 <div id="vPes">
 
 
-<section class="card np">
-<h2>Import dari Excel</h2>
-<div class="drop" id="drop">Tarik file Excel (.xlsx, .xls, .csv) ke sini, atau
-<button class="s" id="pick" type="button">pilih file</button>
-<input type="file" id="file" accept=".xlsx,.xls,.csv" hidden></div>
-<div class="row" id="xlRow" style="margin-top:8px" hidden><button class="s" id="tplBtn" type="button">Unduh Template Excel</button> <button class="s" id="expBtn" type="button">Ekspor Data Peserta (format sama)</button></div>
-<p class="hint">Baris pertama harus berisi judul kolom: <b>Nama</b>, <b>Dojo</b>, <b>Wilayah</b>, <b>Tempat Lahir</b>, <b>Tanggal Lahir</b>, <b>Tingkat Sekarang</b>, <b>Tingkat Tujuan</b>. Format tanggal: 31-12-2010 (hari-bulan-tahun). Template Excel dari tombol di bawah sudah memakai pilihan (dropdown) untuk Dojo, Tingkat Sekarang, dan Tingkat Tujuan agar tidak salah ketik. Dojo harus sudah terdaftar di menu Administrator; Jika kolom Wilayah kosong, wilayah diisi dari data dojo; Pelatih selalu diisi otomatis dari data dojo. Baris dengan dojo yang belum terdaftar ditolak. Biaya ujian dan status pembayaran diatur per dojo di menu Administrator. Contoh: <i>Kyu 7 (Putih)</i> ke <i>Kyu 6 (Kuning)</i>.</p>
-<div class="row" style="margin-top:8px"><label class="row" style="margin:0"><input type="checkbox" id="append" style="width:auto"> Tambahkan ke data yang sudah ada (tanpa ini, data lama diganti)</label></div>
-<div id="msg" role="status"></div>
-</section>
-
-<section class="card np">
-<h2 id="fTitle">Tambah peserta</h2>
-<p class="m e" id="noDojo" hidden>Belum ada dojo terdaftar. Daftarkan dojo di menu Administrator terlebih dahulu.</p>
-<div class="grid">
-<div><label for="fNama">Nama</label><input id="fNama"></div>
-<div><label for="fDojo">Dojo (terdaftar)</label><select id="fDojo"></select></div>
-<div><label for="fWil">Wilayah (terisi dari dojo, bisa diubah)</label><input id="fWil"></div>
-<div><label for="fPelatih">Nama pelatih (otomatis)</label><input id="fPelatih" readonly></div>
-<div><label for="fTmp">Tempat lahir</label><input id="fTmp"></div>
-<div><label for="fTgl">Tanggal lahir</label><input id="fTgl" type="date"></div>
-<div><label for="fDari">Tingkat sekarang</label><input id="fDari" list="tk"></div>
-<div><label for="fKe">Tingkat tujuan</label><input id="fKe" list="tk"></div>
-</div>
-<datalist id="tk"><option>Kyu 7 (Putih)<option>Kyu 6 (Kuning)<option>Kyu 5 (Oranye)<option>Kyu 4 (Hijau)<option>Kyu 3 (Biru)<option>Kyu 2 (Cokelat)<option>Kyu 1 (Cokelat)</datalist>
-<div class="row" style="margin-top:12px"><button class="p" id="save" type="button">Simpan peserta</button><button id="cancel" type="button" hidden>Batal edit</button></div>
-</section>
-
-
-
-<section class="card" id="secList">
-<div class="kop pr"><h1 id="pNama"></h1><p id="pMeta"></p></div>
+<section class="card" id="secView">
+<div class="kop pr"><h1 id="vNama"></h1><p id="vMeta"></p></div>
 <div class="row np" style="margin-bottom:12px">
 <h2 style="margin:0">Daftar peserta</h2><span class="sp"></span>
-<input id="q" placeholder="Cari nama / dojo" style="max-width:200px">
-<button class="p" id="print" type="button">Cetak daftar</button>
-<button id="clear" type="button">Hapus semua</button>
+<input id="qv" placeholder="Cari nama / dojo" style="max-width:200px">
+<button class="p" id="printV" type="button">Cetak daftar</button>
 </div>
 <div class="tw"><table>
-<thead><tr><th>No</th><th>Nama</th><th>Dojo</th><th>Wilayah</th><th>Pelatih</th><th>Tempat, tanggal lahir</th><th>Tingkat sekarang</th><th>Tingkat tujuan</th><th class="col-a np">Aksi</th></tr></thead>
-<tbody id="tb"></tbody><tfoot id="tf"></tfoot>
+<thead><tr><th>No</th><th>Nama</th><th>Dojo</th><th>Wilayah</th><th>Pelatih</th><th>Tempat, tanggal lahir</th><th>Tingkat sekarang</th><th>Tingkat tujuan</th></tr></thead>
+<tbody id="tbv"></tbody><tfoot id="tfv"></tfoot>
 </table></div>
 <div class="pr sign"><div>Panitia<span>(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span></div><div>Bendahara<span>(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span></div></div>
 </section>
@@ -214,6 +183,50 @@ body.pk #secList,body.pl #secRekap{display:none}
 </section>
 <section class="card np"><h2>Dojo terdaftar</h2>
 <div class="tw"><table><thead><tr><th>No</th><th>Dojo</th><th>Wilayah</th><th>Pelatih</th><th>Kontak</th><th class="n">Peserta</th><th class="n">Biaya ujian</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="ab"></tbody></table></div>
+</section>
+<section class="card np">
+<h2>Import dari Excel</h2>
+<div class="drop" id="drop">Tarik file Excel (.xlsx, .xls, .csv) ke sini, atau
+<button class="s" id="pick" type="button">pilih file</button>
+<input type="file" id="file" accept=".xlsx,.xls,.csv" hidden></div>
+<div class="row" id="xlRow" style="margin-top:8px" hidden><button class="s" id="tplBtn" type="button">Unduh Template Excel</button> <button class="s" id="expBtn" type="button">Ekspor Data Peserta (format sama)</button></div>
+<p class="hint">Baris pertama harus berisi judul kolom: <b>Nama</b>, <b>Dojo</b>, <b>Wilayah</b>, <b>Tempat Lahir</b>, <b>Tanggal Lahir</b>, <b>Tingkat Sekarang</b>, <b>Tingkat Tujuan</b>. Format tanggal: 31-12-2010 (hari-bulan-tahun). Template Excel dari tombol di bawah sudah memakai pilihan (dropdown) untuk Dojo, Tingkat Sekarang, dan Tingkat Tujuan agar tidak salah ketik. Dojo harus sudah terdaftar di menu Administrator; Jika kolom Wilayah kosong, wilayah diisi dari data dojo; Pelatih selalu diisi otomatis dari data dojo. Baris dengan dojo yang belum terdaftar ditolak. Biaya ujian dan status pembayaran diatur per dojo di menu Administrator. Contoh: <i>Kyu 7 (Putih)</i> ke <i>Kyu 6 (Kuning)</i>.</p>
+<div class="row" style="margin-top:8px"><label class="row" style="margin:0"><input type="checkbox" id="append" style="width:auto"> Tambahkan ke data yang sudah ada (tanpa ini, data lama diganti)</label></div>
+<div id="msg" role="status"></div>
+</section>
+
+<section class="card np">
+<h2 id="fTitle">Tambah peserta</h2>
+<p class="m e" id="noDojo" hidden>Belum ada dojo terdaftar. Daftarkan dojo di menu Administrator terlebih dahulu.</p>
+<div class="grid">
+<div><label for="fNama">Nama</label><input id="fNama"></div>
+<div><label for="fDojo">Dojo (terdaftar)</label><select id="fDojo"></select></div>
+<div><label for="fWil">Wilayah (terisi dari dojo, bisa diubah)</label><input id="fWil"></div>
+<div><label for="fPelatih">Nama pelatih (otomatis)</label><input id="fPelatih" readonly></div>
+<div><label for="fTmp">Tempat lahir</label><input id="fTmp"></div>
+<div><label for="fTgl">Tanggal lahir</label><input id="fTgl" type="date"></div>
+<div><label for="fDari">Tingkat sekarang</label><input id="fDari" list="tk"></div>
+<div><label for="fKe">Tingkat tujuan</label><input id="fKe" list="tk"></div>
+</div>
+<datalist id="tk"><option>Kyu 7 (Putih)<option>Kyu 6 (Kuning)<option>Kyu 5 (Oranye)<option>Kyu 4 (Hijau)<option>Kyu 3 (Biru)<option>Kyu 2 (Cokelat)<option>Kyu 1 (Cokelat)</datalist>
+<div class="row" style="margin-top:12px"><button class="p" id="save" type="button">Simpan peserta</button><button id="cancel" type="button" hidden>Batal edit</button></div>
+</section>
+
+
+
+<section class="card" id="secList">
+<div class="kop pr"><h1 id="pNama"></h1><p id="pMeta"></p></div>
+<div class="row np" style="margin-bottom:12px">
+<h2 style="margin:0">Kelola daftar peserta</h2><span class="sp"></span>
+<input id="q" placeholder="Cari nama / dojo" style="max-width:200px">
+<button class="p" id="print" type="button">Cetak daftar</button>
+<button id="clear" type="button">Hapus semua</button>
+</div>
+<div class="tw"><table>
+<thead><tr><th>No</th><th>Nama</th><th>Dojo</th><th>Wilayah</th><th>Pelatih</th><th>Tempat, tanggal lahir</th><th>Tingkat sekarang</th><th>Tingkat tujuan</th><th class="col-a np">Aksi</th></tr></thead>
+<tbody id="tb"></tbody><tfoot id="tf"></tfoot>
+</table></div>
+<div class="pr sign"><div>Panitia<span>(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span></div><div>Bendahara<span>(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span></div></div>
 </section>
 </div>
 <div id="vSet" hidden>
@@ -381,12 +394,15 @@ function render(){
  const list=data.filter(p=>!k||(p.nama+" "+p.dojo).toLowerCase().includes(k));
  $("tb").innerHTML=list.length?list.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nama)}</td><td>${esc(p.dojo)}${findDojo(p.dojo)?"":' <span class="warn np">(belum terdaftar)</span>'}</td><td>${esc(p.wilayah)}</td><td>${esc(p.pelatih)}</td><td>${esc(ttl(p))}</td><td>${esc(p.dari)}</td><td>${esc(p.ke)}</td><td class="col-a np"><button class="s" data-e="${p.id}">Edit</button> <button class="s" data-d="${p.id}">Hapus</button></td></tr>`).join(""):`<tr><td colspan="9" class="empty">${data.length?"Tidak ada peserta yang cocok.":"Belum ada peserta. Import file Excel atau tambah peserta di atas."}</td></tr>`;
  $("tf").innerHTML=`<tr><td colspan="8">Total (${list.length} peserta)</td></tr>`;
+ const kv=$("qv").value.toLowerCase(),lv=data.filter(p=>!kv||(p.nama+" "+p.dojo).toLowerCase().includes(kv));
+ $("tbv").innerHTML=lv.length?lv.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nama)}</td><td>${esc(p.dojo)}</td><td>${esc(p.wilayah)}</td><td>${esc(p.pelatih)}</td><td>${esc(ttl(p))}</td><td>${esc(p.dari)}</td><td>${esc(p.ke)}</td></tr>`).join(""):`<tr><td colspan="8" class="empty">${data.length?"Tidak ada peserta yang cocok.":"Belum ada peserta."}</td></tr>`;
+ $("tfv").innerHTML=`<tr><td colspan="8">Total (${lv.length} peserta)</td></tr>`;
  const sum=(a,f)=>a.reduce((s,p)=>s+f(p),0);
  const TA=sum(data,tot),LA=sum(data.filter(lunas),tot);
  $("stats").innerHTML=`<div class="stat"><small>Jumlah peserta</small><b>${data.length}</b></div><div class="stat r"><small>Total tagihan</small><b>${rp(TA)}</b></div><div class="stat g"><small>Sudah dibayar</small><b>${rp(LA)}</b></div><div class="stat y"><small>Belum dibayar</small><b>${rp(TA-LA)}</b></div>`;
- $("pNama").textContent=$("rNama").textContent=info.nama||"Ujian Kenaikan Tingkat Karate";
+ $("vNama").textContent=$("pNama").textContent=$("rNama").textContent=info.nama||"Ujian Kenaikan Tingkat Karate";
  const tg=info.tgl?new Date(info.tgl).toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}):"";
- $("pMeta").textContent=$("rMeta").textContent=[info.org,info.tempat,tg].filter(Boolean).join(" | ");
+ $("vMeta").textContent=$("pMeta").textContent=$("rMeta").textContent=[info.org,info.tempat,tg].filter(Boolean).join(" | ");
  // rekap per dojo
  const g={};
  data.forEach(p=>{const nm=(p.dojo||"").trim()||"(Tanpa dojo)",key=nm.toLowerCase();const o=g[key]||(g[key]={nm,key,wl:new Set(),pl:new Set(),n:0,uj:0,sb:0,tot:0,lns:0});o.n++;if(p.pelatih)o.pl.add(p.pelatih);if(p.wilayah)o.wl.add(p.wilayah);o.uj+=fee(p,"ujian");o.tot+=tot(p);if(lunas(p))o.lns+=tot(p)});
@@ -550,7 +566,7 @@ $("tb").onclick=e=>{
  if(t.d&&confirm("Hapus peserta ini?")){data=data.filter(p=>p.id!==t.d);save();render()}
  if(t.e){const p=data.find(x=>x.id===t.e);editId=p.id;$("fNama").value=p.nama;$("fDojo").value=p.dojo;if($("fDojo").value!==p.dojo)$("fDojo").value="";$("fWil").value=p.wilayah||"";$("fPelatih").value=p.pelatih||"";$("fTmp").value=p.tmp||"";$("fTgl").value=/^\d{4}-\d{2}-\d{2}$/.test(p.tgl||"")?p.tgl:"";$("fDari").value=p.dari;$("fKe").value=p.ke;$("fTitle").textContent="Edit peserta";$("cancel").hidden=false;$("fNama").scrollIntoView({behavior:"smooth",block:"center"});$("fNama").focus()}
 };
-$("q").oninput=render;
+$("q").oninput=render;$("qv").oninput=render;$("printV").onclick=()=>doPrint("pl");
 $("print").onclick=()=>doPrint("pl");
 $("clear").onclick=()=>{if(data.length&&confirm("Hapus semua data peserta?")){data=[];save();render()}};
 
