@@ -138,6 +138,7 @@ body.anon .avw .dot{background:var(--mute)}
 .nb{display:inline-block;min-width:18px;padding:0 6px;margin-left:6px;border-radius:99px;background:var(--red);color:#fff;font-size:11px;line-height:18px;text-align:center}
 .nb[hidden]{display:none}
 .rq{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:var(--bg)}
+.kpi.k5{background:linear-gradient(135deg,#6d28d9,#a78bfa)}.kpi.k6{background:linear-gradient(135deg,#0e7490,#22d3ee)}
 </style>
 </head>
 <body>
@@ -465,8 +466,8 @@ function renderDash(){
  const lv=tally(data,p=>p[lvMode]).sort((a,b)=>rk(a.n)-rk(b.n)||a.n.localeCompare(b.n));
  const wl=tally(data,p=>p.wilayah).sort(byVal),dj=tally(data,p=>p.dojo).sort(byVal);
  const have=new Set(dj.map(o=>o.n.toLowerCase())),all=dj.concat(dojos.filter(d=>!have.has(d.nama.toLowerCase())).map(d=>({n:d.nama,v:0})));
- const top=lv.slice().sort(byVal)[0],tg=lvMode==="ke"?"tingkat tujuan":"tingkat sekarang";
- $("kpis").innerHTML=`<div class="kpi k1"><small>Total peserta</small><b>${N}</b><span>ikut ujian kenaikan tingkat</span></div><div class="kpi k2"><small>Dojo berpeserta</small><b>${dj.length}</b><span>dari ${dojos.length} dojo terdaftar</span></div><div class="kpi k3"><small>Wilayah</small><b>${wl.length}</b><span>wilayah berpartisipasi</span></div><div class="kpi k4"><small>Tingkat tujuan terbanyak</small><b style="font-size:19px;padding:5px 0">${top?esc(top.n):"-"}</b><span>${top?top.v+" peserta":"belum ada data"}</span></div>`;
+ const tdj=dj.find(o=>o.n!=="(Belum diisi)"),twl=wl.find(o=>o.n!=="(Belum diisi)"),top=lv.slice().sort(byVal)[0],tg=lvMode==="ke"?"tingkat tujuan":"tingkat sekarang";
+ $("kpis").innerHTML=`<div class="kpi k1"><small>Total peserta</small><b>${N}</b><span>ikut ujian kenaikan tingkat</span></div><div class="kpi k2"><small>Dojo berpeserta</small><b>${dj.length}</b><span>dari ${dojos.length} dojo terdaftar</span></div><div class="kpi k3"><small>Wilayah</small><b>${wl.length}</b><span>wilayah berpartisipasi</span></div><div class="kpi k4"><small>Tingkat tujuan terbanyak</small><b style="font-size:19px;padding:5px 0">${top?esc(top.n):"-"}</b><span>${top?top.v+" peserta":"belum ada data"}</span></div><div class="kpi k5"><small>Dojo terbanyak mengirim peserta</small><b style="font-size:19px;padding:5px 0">${tdj?esc(tdj.n):"-"}</b><span>${tdj?tdj.v+" peserta":"belum ada data"}</span></div><div class="kpi k6"><small>Wilayah terbanyak mengirim peserta</small><b style="font-size:19px;padding:5px 0">${twl?esc(twl.n):"-"}</b><span>${twl?twl.v+" peserta":"belum ada data"}</span></div>`;
  $("dLv").innerHTML=N?bars(lv,N,beltCol):emp;
  $("dWil").innerHTML=N?donut(wl,N):emp;
  $("dDoj").innerHTML=all.length?bars(dojAll?all:all.slice(0,8),Math.max(N,1)):emp;
@@ -915,7 +916,7 @@ $("prFoto").onchange=e=>{const f=e.target.files[0];e.target.value="";if(!f)retur
  x.drawImage(im,(im.width-z)/2,(im.height-z)/2,z,z,0,0,160,160);const m=await Cloud.saveFoto(c.toDataURL("image/jpeg",.85));pm(1,m||"Foto diganti.",!!m)};im.src=URL.createObjectURL(f)};
 setAccess(false);avatar($("avBtn"),null);
 load();fillInfo();render();
-if(window.Cloud)Cloud.start({get:()=>({data,info,dojos,keluar}),set:applyState,logo:u=>{if(window.__showLogo)window.__showLogo(u)},access:setAccess,profile:showProfile});
+if(window.Cloud)Cloud.start({get:()=>({data,info,dojos,keluar,req:hapusReq}),set:applyState,logo:u=>{if(window.__showLogo)window.__showLogo(u)},access:setAccess,profile:showProfile});
 </script>
 <script>
 (function(){try{var i=document.getElementById("logoImg"),t=document.getElementById("logoTxt"),f=document.getElementById("logoFile");
