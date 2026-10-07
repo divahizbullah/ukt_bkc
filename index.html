@@ -10,12 +10,12 @@
   const SUPABASE_ANON_KEY = 'sb_publishable_oaBsZpU4HOdgwxN5wVpZgQ_4zt-GY7u';
 
   // Inisialisasi Supabase client
-  const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+ 
   // Contoh fungsi untuk mengecek koneksi / mengambil data
   async function testConnection() {
     // Ganti 'nama_tabel' dengan nama tabel yang ada di Supabase Anda
-    const { data, error } = await supabase.from('uktbkc').select('*');
+    const { data, error } = await supabaseClient.from('uktbkc').select('*');
     if (error) {
       console.error('Error menghubungkan ke Supabase:', error);
     } else {
