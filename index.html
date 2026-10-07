@@ -1,119 +1,172 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
- <!-- Load Supabase JS Client dari CDN -->
+<!-- Load Supabase JS Client dari CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  // Ganti dengan Project URL & Anon Key dari Dashboard Supabase Anda
+  // Konfigurasi Supabase
   const SUPABASE_URL = 'https://jgxirszqwsrmessfakjq.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_oaBsZpU4HOdgwxN5wVpZgQ_4zt-GY7u';
 
-  // Inisialisasi Supabase client
+  // Inisialisasi Supabase Client
   const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
- 
-  // Contoh fungsi untuk mengecek koneksi / mengambil data
-  async function testConnection() {
-    // Ganti 'nama_tabel' dengan nama tabel yang ada di Supabase Anda
-    const { data, error } = await supabaseClient.from('uktbkc').select('*');
+
+  // --- 1. FUNGSI MUAT DATA DARI SUPABASE (AUTO SYNC CROSS-DEVICE) ---
+  async function muatSemuaData() {
+    await Promise.all([muatDataDojo(), muatDataPeserta()]);
+  }
+
+  // Memuat daftar Dojo dari Supabase
+  async function muatDataDojo() {
+    const { data: listDojo, error } = await supabaseClient
+      .from('dojo')
+      .select('*')
+      .order('nama_dojo', { ascending: true });
+
     if (error) {
-      console.error('Error menghubungkan ke Supabase:', error);
-    } else {
-      console.log('Data dari Supabase:', data);
+      console.error('Gagal mengambil data dojo:', error);
+      return;
+    }
+
+    // Render ke Select Option / Tabel Dojo di HTML
+    const selectDojo = document.getElementById('select-dojo');
+    if (selectDojo) {
+      selectDojo.innerHTML = '<option value="">-- Pilih Dojo --</option>';
+      listDojo.forEach(d => {
+        selectDojo.innerHTML += `<option value="${d.nama_dojo}">${d.nama_dojo} (${d.wilayah || '-'})</option>`;
+      });
     }
   }
 
-  testConnection();
- // Fungsi untuk menyimpan data Pendaftaran Dojo tunggal
-async function simpanDojo(event) {
-  event.preventDefault(); // Mencegah form reload/refresh
+  // Memuat daftar Peserta dari Supabase
+  async function muatDataPeserta() {
+    const { data: listPeserta, error } = await supabaseClient
+      .from('peserta')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-  // Ambil nilai dari input HTML (pastikan ID elemen sesuai dengan yang ada di index.html)
-  const namaDojo = document.getElementById('input-nama-dojo').value;
-  const wilayah = document.getElementById('input-wilayah').value;
-  const namaPelatih = document.getElementById('input-nama-pelatih').value;
-  const kontak = document.getElementById('input-kontak').value;
-  const emailPelatih = document.getElementById('input-email-pelatih').value;
-  const biayaUjian = document.getElementById('input-biaya-ujian').value;
-  const statusPembayaran = document.getElementById('select-status-pembayaran').value;
+    if (error) {
+      console.error('Gagal mengambil data peserta:', error);
+      return;
+    }
 
-  // Kirim data ke tabel 'dojo' di Supabase
-  const { data, error } = await supabaseClient
-    .from('uktbkc')
-    .insert([
-      {
+    // Render ke Tabel Peserta di HTML
+    const tabelBody = document.getElementById('tabel-peserta');
+    const totalElem = document.getElementById('total-peserta');
+
+    if (tabelBody) {
+      tabelBody.innerHTML = '';
+      listPeserta.forEach((p, idx) => {
+        tabelBody.innerHTML += `
+          <tr>
+            <td>${idx + 1}</td>
+            <td>${p.nama}</td>
+            <td>${p.dojo || '-'}</td>
+            <td>${p.tingkat_tujuan || '-'}</td>
+            <td><button onclick="hapusPeserta(${p.id})">Hapus</button></td>
+          </tr>
+        `;
+      });
+    }
+
+    if (totalElem) {
+      totalElem.innerText = `Total (${listPeserta.length} peserta)`;
+    }
+  }
+
+  // --- 2. FUNGSI SIMPAN DOJO KE SUPABASE ---
+  async function simpanDojo(event) {
+    event.preventDefault();
+
+    const namaDojo = document.getElementById('input-nama-dojo')?.value;
+    const wilayah = document.getElementById('input-wilayah')?.value;
+    const namaPelatih = document.getElementById('input-nama-pelatih')?.value;
+    const kontak = document.getElementById('input-kontak')?.value;
+    const emailPelatih = document.getElementById('input-email-pelatih')?.value;
+    const biayaUjian = document.getElementById('input-biaya-ujian')?.value;
+    const statusPembayaran = document.getElementById('select-status-pembayaran')?.value;
+
+    if (!namaDojo) {
+      alert('Nama Dojo wajib diisi!');
+      return;
+    }
+
+    const { error } = await supabaseClient
+      .from('dojo')
+      .insert([{
         nama_dojo: namaDojo,
         wilayah: wilayah,
         nama_pelatih: namaPelatih,
         kontak: kontak,
         email_pelatih: emailPelatih,
         biaya_ujian: parseInt(biayaUjian) || 0,
-        status_pembayaran: statusPembayaran
-      }
-    ]);
+        status_pembayaran: statusPembayaran || 'Belum'
+      }]);
 
-  if (error) {
-    console.error('Gagal menyimpan dojo:', error);
-    alert('Gagal menyimpan dojo: ' + error.message);
-  } else {
-    alert('Data Dojo berhasil disimpan ke Supabase!');
-    // Bersihkan isi form setelah berhasil
-    document.getElementById('form-pendaftaran-dojo').reset();
-  }
-}
- // Contoh dataArrayExcel hasil parse dari file Excel
-// dataArrayExcel = [{ nama_dojo: 'Dojo A', wilayah: 'Bogor', ... }, { nama_dojo: 'Dojo B', ... }]
-
-async function importDojoMassal(dataArrayExcel) {
-  const { data, error } = await supabaseClient
-    .from('uktbkc')
-    .insert(dataArrayExcel); // Supabase mendukung batch insert otomatis
-
-  if (error) {
-    console.error('Gagal import massal:', error);
-    alert('Gagal import massal: ' + error.message);
-  } else {
-    alert('Berhasil mengimpor seluruh data dojo ke Supabase!');
-  }
-}
- async function loadDataFromSupabase() {
-  const { data, error } = await supabaseClient
-    .from('uktbkc') // Nama tabel Anda
-    .select('*');
-
-  if (!error && data) {
-    // Tampilkan data ke tabel/daftar di HTML
-    console.log('Data tersinkronisasi dari Supabase:', data);
-    // Masukkan logika untuk merender baris tabel Anda di sini
-  }
-}
-
-// Jalankan saat halaman dibuka
-document.addEventListener('DOMContentLoaded', loadDataFromSupabase);
- <!-- Tambahkan onsubmit="simpanDojo(event)" pada form -->
-<form id="form-pendaftaran-dojo" onsubmit="simpanDojo(event)">
-  <!-- Input fields -->
-  <button type="submit">Simpan dojo</button>
-</form>
- // Fungsi untuk menarik data dari Supabase dan menampilkannya
-async function muatDataDojo() {
-  const { data, error } = await supabaseClient
-    .from('uktbkc')
-    .select('*');
-
-  if (error) {
-    console.error('Gagal memuat data dari Supabase:', error);
-    return;
+    if (error) {
+      alert('Gagal menyimpan Dojo: ' + error.message);
+    } else {
+      alert('Data Dojo berhasil disimpan ke Cloud Database!');
+      document.getElementById('form-pendaftaran-dojo')?.reset();
+      muatDataDojo();
+    }
   }
 
-  console.log('Data tersimpan di Supabase:', data);
-  // Di sini Anda bisa memanggil fungsi untuk merender baris data ke tabel HTML
-}
+  // --- 3. FUNGSI SIMPAN PESERTA KE SUPABASE ---
+  async function simpanPeserta(event) {
+    event.preventDefault();
 
-// Jalankan saat halaman selesai dimuat
-document.addEventListener('DOMContentLoaded', muatDataDojo);
+    const nama = document.getElementById('input-nama')?.value;
+    const dojo = document.getElementById('select-dojo')?.value;
+    const tingkatTujuan = document.getElementById('select-tingkat')?.value;
+
+    if (!nama) {
+      alert('Nama Peserta wajib diisi!');
+      return;
+    }
+
+    const { error } = await supabaseClient
+      .from('peserta')
+      .insert([{
+        nama: nama,
+        dojo: dojo,
+        tingkat_tujuan: tingkatTujuan
+      }]);
+
+    if (error) {
+      alert('Gagal menyimpan Peserta: ' + error.message);
+    } else {
+      alert('Peserta berhasil disimpan!');
+      document.getElementById('form-peserta')?.reset();
+      muatDataPeserta();
+    }
+  }
+
+  // --- 4. FUNGSI HAPUS PESERTA DARI SUPABASE ---
+  async function hapusPeserta(id) {
+    if (!confirm('Yakin ingin menghapus peserta ini?')) return;
+
+    const { error } = await supabaseClient
+      .from('peserta')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      alert('Gagal menghapus: ' + error.message);
+    } else {
+      muatDataPeserta();
+    }
+  }
+
+  // Otomatis Muat Data Saat Halaman Dibuka di Perangkat Apapun
+  document.addEventListener('DOMContentLoaded', muatSemuaData);
 </script>
- 
+ <form id="form-pendaftaran-dojo" onsubmit="simpanDojo(event)">
+  <form id="form-peserta" onsubmit="simpanPeserta(event)">
+
+
+   
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ujian Kenaikan Tingkat BKC Cabang Kabupaten Bogor</title>
