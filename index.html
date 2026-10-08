@@ -389,7 +389,7 @@ create policy "upload_delete" on bkc_upload for delete to authenticated using (t
 </section>
 <section class="card" id="secMat">
 <div class="kop pr"><h1 id="mtNama"></h1><p id="mtMeta"></p><p><b>Lembar Materi dan Penilaian Ujian</b></p></div>
-<div class="row np" style="margin-bottom:12px"><h2 style="margin:0">Materi ujian per sabuk</h2><span class="sp"></span><select id="mtFil" style="max-width:220px" aria-label="Pilih sabuk"></select><button class="p" id="mtPrint" type="button">Cetak materi</button><button id="mtXls" type="button">Unduh Excel</button><button id="mtNil" type="button">Unduh lembar penilaian</button></div>
+<div class="row np" style="margin-bottom:12px"><h2 style="margin:0">Materi ujian per sabuk</h2><span class="sp"></span><select id="mtFil" style="max-width:220px" aria-label="Pilih sabuk"></select><button class="p" id="mtPrint" type="button">Cetak materi</button><button id="mtXls" type="button">Unduh Excel</button><button id="mtNil" type="button">Unduh lembar penilaian (PDF)</button></div>
 <div class="lgd"><b>Keterangan nilai:</b><span><span class="nk gm">M</span> Memuaskan</span><span><span class="nk gb">B</span> Baik</span><span><span class="nk gcb">CB</span> Cukup Baik</span><span><span class="nk gc">C</span> Cukup</span></div>
 <div id="mtBody"></div>
 <div class="pr sign"><div>Penguji<span>(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span></div><div>Panitia<span>(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span></div></div>
@@ -397,7 +397,7 @@ create policy "upload_delete" on bkc_upload for delete to authenticated using (t
 <div id="vUjn" hidden>
 <section class="card" id="secUjn">
 <div class="kop pr"><h1 id="gtNama"></h1><p id="gtMeta"></p><p><b>Materi Ujian</b></p></div>
-<div class="row np" style="margin-bottom:6px"><h2 style="margin:0">Materi ujian</h2><span class="sp"></span><select id="gtFil" style="max-width:220px" aria-label="Pilih sabuk"></select><button class="p" id="gtXls" type="button">Unduh materi (Excel)</button><button id="gtNil" type="button">Unduh lembar penilaian</button><button id="gtPrint" type="button">Cetak / simpan PDF</button></div>
+<div class="row np" style="margin-bottom:6px"><h2 style="margin:0">Materi ujian</h2><span class="sp"></span><select id="gtFil" style="max-width:220px" aria-label="Pilih sabuk"></select><button class="p" id="gtXls" type="button">Unduh materi (Excel)</button><button id="gtNil" type="button">Unduh lembar penilaian (PDF)</button><button id="gtPrint" type="button">Cetak / simpan PDF</button></div>
 <p class="hint np" style="margin:0 0 12px">Pilih sabuk yang akan diujikan, lalu unduh untuk bahan latihan. Nilai ujian terdiri dari empat tingkat: M (Memuaskan), B (Baik), CB (Cukup Baik), dan C (Cukup).</p>
 <div class="lgd"><b>Keterangan nilai:</b><span><span class="nk gm">M</span> Memuaskan</span><span><span class="nk gb">B</span> Baik</span><span><span class="nk gcb">CB</span> Cukup Baik</span><span><span class="nk gc">C</span> Cukup</span></div>
 <div id="gtBody"></div>
@@ -1059,46 +1059,47 @@ async function dlMateri(fil){
  const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=[{wch:22},{wch:14},{wch:5},{wch:40},{wch:16},{wch:12},{wch:16},{wch:12}];XLSX.utils.book_append_sheet(wb,ws,"Materi Ujian");
  try{await dl.save({filename:"Materi_Ujian_BKC"+(fil?"_"+fil.replace(/[^A-Za-z0-9]+/g,"_").replace(/^_|_$/g,""):"")+".xlsx",data:XLSX.write(wb,{type:"array",bookType:"xlsx"})})}catch(e){if(!e||e.code!=="declined")alert("File gagal disimpan.")}}
 $("mtXls").onclick=()=>dlMateri($("mtFil").value);$("gtXls").onclick=()=>dlMateri($("gtFil").value);
-// lembar penilaian: No, Nama Peserta, lalu M / B / CB / C untuk tiap kategori
-async function dlNilai(fil){
- const L=lvList(),pes=data.filter(p=>String(p.ke||"").trim()),GR=["PENGUATAN DASAR","KIHON","KATA","LAINNYA"],SC=["M","B","CB","C"],NC=2+GR.length*4;
- const all=fil?[fil]:[...new Set(pes.map(p=>String(p.ke).trim()).concat(matAll().map(m=>m.sabuk)))].sort((a,b)=>lvSort(a,b,L)),list=all.length?all:[""];
+// lembar penilaian (PDF): form kosong yang bisa dipakai untuk semua sabuk
+const HW={" ":278,"!":278,'"':355,"#":556,"$":556,"%":889,"&":667,"'":191,"(":333,")":333,"*":389,"+":584,",":278,"-":333,".":278,"/":278,":":278,";":278,"<":584,"=":584,">":584,"?":556,"@":1015,"A":667,"B":667,"C":722,"D":722,"E":667,"F":611,"G":778,"H":722,"I":278,"J":500,"K":667,"L":556,"M":833,"N":722,"O":778,"P":667,"Q":778,"R":722,"S":667,"T":611,"U":722,"V":667,"W":944,"X":667,"Y":667,"Z":611,"[":278,"\\":278,"]":278,"^":469,"_":556,"a":556,"b":556,"c":500,"d":556,"e":556,"f":278,"g":556,"h":556,"i":222,"j":222,"k":500,"l":222,"m":833,"n":556,"o":556,"p":556,"q":556,"r":333,"s":500,"t":278,"u":556,"v":500,"w":722,"x":500,"y":500,"z":500};
+function nilaiPdf(judul,meta){
+ const W=842,H=595,X0=30,X1=812,ops=[],E=t=>String(t).replace(/[^\x00-\xFF]/g,"?").replace(/([\\()])/g,"\\$1"),
+  sw=(t,z,b)=>[...String(t)].reduce((a,c)=>a+(/[0-9]/.test(c)?556:(HW[c]||556)),0)*z/1000*(b?1.06:1),
+  T=(t,x,y,z,b)=>ops.push("BT /"+(b?"F2":"F1")+" "+z+" Tf "+x.toFixed(2)+" "+y.toFixed(2)+" Td ("+E(t)+") Tj ET"),
+  TC=(t,cx,cy,z,b)=>T(t,cx-sw(t,z,b)/2,cy-z*.35,z,b),
+  R=(x,y,w,h)=>ops.push(x.toFixed(2)+" "+y.toFixed(2)+" "+w.toFixed(2)+" "+h.toFixed(2)+" re S");
+ let z=14;const tw=sw(judul,z,1);if(tw>760)z=z*760/tw;
+ TC(judul,W/2,555,z,1);if(meta)TC(meta,W/2,541,9,0);
+ TC("LEMBAR PENILAIAN UJIAN",W/2,524,11,1);
+ ops.push("1 w "+X0+" 513 m "+X1+" 513 l S");
+ T("NAMA PENGUJI :",X0,490,10,1);T("SABUK / TINGKAT :",X0,468,10,1);
+ ops.push(".5 w 140 488 m 420 488 l S 140 466 m 420 466 l S");
+ const TOP=453,hA=18,hB=18,rh=22,wNo=30,wNm=212,ws=(X1-X0-wNo-wNm)/16,GR=["PENGUATAN DASAR","KIHON","KATA","LAINNYA"],SC=["M","B","CB","C"],yB=TOP-hA-hB,n=Math.floor((yB-44)/rh);
+ ops.push(".93 g "+X0+" "+yB+" "+(X1-X0)+" "+(hA+hB)+" re f 0 g .5 w");
+ R(X0,yB,wNo,hA+hB);R(X0+wNo,yB,wNm,hA+hB);
+ TC("No",X0+wNo/2,yB+(hA+hB)/2,10,1);TC("NAMA PESERTA",X0+wNo+wNm/2,yB+(hA+hB)/2,10,1);
+ GR.forEach((g,i)=>{const gx=X0+wNo+wNm+i*4*ws;R(gx,yB+hB,4*ws,hA);TC(g,gx+2*ws,yB+hB+hA/2,10,1);SC.forEach((c,k)=>{R(gx+k*ws,yB,ws,hB);TC(c,gx+(k+.5)*ws,yB+hB/2,10,1)})});
+ for(let r=0;r<n;r++){const y=yB-(r+1)*rh;R(X0,y,wNo,rh);R(X0+wNo,y,wNm,rh);for(let c=0;c<16;c++)R(X0+wNo+wNm+c*ws,y,ws,rh);TC(String(r+1),X0+wNo/2,y+rh/2,10,0)}
+ TC("Keterangan nilai:   M = Memuaskan   |   B = Baik   |   CB = Cukup Baik   |   C = Cukup",W/2,26,8,0);
+ const ct=ops.join("\n"),objs=["<< /Type /Catalog /Pages 2 0 R >>","<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+  "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 "+W+" "+H+"] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>",
+  "<< /Length "+ct.length+" >>\nstream\n"+ct+"\nendstream",
+  "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
+  "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"];
+ let out="%PDF-1.4\n";const off=[];objs.forEach((o,i)=>{off.push(out.length);out+=(i+1)+" 0 obj\n"+o+"\nendobj\n"});
+ const xr=out.length;out+="xref\n0 "+(objs.length+1)+"\n0000000000 65535 f \n"+off.map(o=>String(o).padStart(10,"0")+" 00000 n \n").join("")+"trailer\n<< /Size "+(objs.length+1)+" /Root 1 0 R >>\nstartxref\n"+xr+"\n%%EOF";
+ const u=new Uint8Array(out.length);for(let i=0;i<out.length;i++)u[i]=out.charCodeAt(i)&255;return u}
+async function dlNilai(){
  const dl=await getDl();if(!dl){alert("Unduhan tidak tersedia di tampilan ini.");return}
- const rowsFor=sb=>{const r=pes.filter(p=>String(p.ke).trim().toLowerCase()===sb.toLowerCase()).map(p=>p.nama||"").sort((a,b)=>String(a).localeCompare(String(b)));while(r.length<15)r.push("");return r};
- const used=new Set(),nm=sb=>{const b=(sb||"Penilaian").replace(/[\[\]:*?\/\\]/g," ").trim().slice(0,27)||"Penilaian";let n=b,i=2;while(used.has(n.toLowerCase()))n=b+" "+i++;used.add(n.toLowerCase());return n};
- const fn="Lembar_Penilaian_BKC"+(fil?"_"+fil.replace(/[^A-Za-z0-9]+/g,"_").replace(/^_|_$/g,""):"")+".xlsx";
- let buf;
- if(typeof ExcelJS!=="undefined"){
-  const wb=new ExcelJS.Workbook(),bd={style:"thin",color:{argb:"FF888888"}},BD={top:bd,left:bd,bottom:bd,right:bd};
-  list.forEach(sb=>{
-   const ws=wb.addWorksheet(nm(sb)),names=rowsFor(sb),ct={horizontal:"center",vertical:"middle"};
-   ws.columns=[{width:6},{width:38}].concat(Array(GR.length*4).fill({width:5.5}));
-   ws.getCell(1,1).value="NAMA PENGUJI :";ws.getCell(1,1).font={bold:true};
-   ws.mergeCells(1,7,1,NC);ws.getCell(1,7).value=(info.nama||"Ujian Kenaikan Tingkat Karate")+(sb?" - "+sb:"");ws.getCell(1,7).alignment={horizontal:"right"};ws.getCell(1,7).font={bold:true};
-   ws.mergeCells(2,1,3,1);ws.mergeCells(2,2,3,2);ws.getCell(2,1).value="No";ws.getCell(2,2).value="NAMA PESERTA";
-   GR.forEach((g,i)=>{const c=3+i*4;ws.mergeCells(2,c,2,c+3);ws.getCell(2,c).value=g;SC.forEach((x,k)=>{ws.getCell(3,c+k).value=x})});
-   for(let r=2;r<=3;r++)for(let c=1;c<=NC;c++){const x=ws.getCell(r,c);x.alignment=ct;x.border=BD;x.font={bold:true};x.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFF2F2F2"}}}
-   names.forEach((n,i)=>{const r=4+i;ws.getRow(r).height=20;for(let c=1;c<=NC;c++){const x=ws.getCell(r,c);x.border=BD;if(c!==2)x.alignment=ct}ws.getCell(r,1).value=i+1;ws.getCell(r,2).value=n});
-   ws.views=[{state:"frozen",ySplit:3}];ws.pageSetup={orientation:"landscape",fitToPage:true,fitToWidth:1,fitToHeight:0};
-  });
-  buf=await wb.xlsx.writeBuffer();
- }else if(typeof XLSX!=="undefined"){
-  const wb=XLSX.utils.book_new();
-  list.forEach(sb=>{const h2=["No","NAMA PESERTA"],h3=["",""];GR.forEach(g=>{h2.push(g,"","","");SC.forEach(x=>h3.push(x))});
-   const ws=XLSX.utils.aoa_to_sheet([["NAMA PENGUJI :"],h2,h3].concat(rowsFor(sb).map((n,i)=>[i+1,n])));
-   ws["!merges"]=[{s:{r:1,c:0},e:{r:2,c:0}},{s:{r:1,c:1},e:{r:2,c:1}}].concat(GR.map((g,i)=>({s:{r:1,c:2+i*4},e:{r:1,c:5+i*4}})));
-   ws["!cols"]=[{wch:6},{wch:38}].concat(Array(GR.length*4).fill({wch:6}));XLSX.utils.book_append_sheet(wb,ws,nm(sb))});
-  buf=XLSX.write(wb,{type:"array",bookType:"xlsx"});
- }else{alert("Library Excel gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.");return}
- try{await dl.save({filename:fn,data:buf})}catch(e){if(!e||e.code!=="declined")alert("File gagal disimpan.")}}
-$("mtNil").onclick=()=>dlNilai($("mtFil").value);$("gtNil").onclick=()=>dlNilai($("gtFil").value);
+ const u=nilaiPdf(info.nama||"Ujian Kenaikan Tingkat Karate",$("pMeta").textContent||"");
+ try{await dl.save({filename:"Lembar_Penilaian_BKC.pdf",data:u})}catch(e){if(!e||e.code!=="declined")alert("File gagal disimpan.")}}
+$("mtNil").onclick=$("gtNil").onclick=()=>dlNilai();
 
 // excel template / export (format sama dengan import)
 // unduhan: pakai fitur Claude jika tersedia, jika tidak (mis. di Vercel/browser biasa) unduh langsung
 async function getDl(){
  try{if(window.claude&&typeof window.claude.use==="function"){const d=await window.claude.use("downloads");if(d)return d}}catch(e){}
  return{save:async({filename,data})=>{
-  const mime=/\.xlsx$/i.test(filename)?"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":/\.json$/i.test(filename)?"application/json":"application/octet-stream";
+  const mime=/\.xlsx$/i.test(filename)?"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":/\.pdf$/i.test(filename)?"application/pdf":/\.json$/i.test(filename)?"application/json":"application/octet-stream";
   const b=data instanceof Blob?data:new Blob([data],{type:mime}),u=URL.createObjectURL(b),a=document.createElement("a");
   a.href=u;a.download=filename;a.style.display="none";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),10000);return{status:"saved"}}}
 }
