@@ -236,6 +236,11 @@ body.anon .avw .dot{background:var(--mute)}
 </div></div>
 
 
+<section class="card np" id="secBaru" hidden>
+<div class="row" style="margin-bottom:6px"><h2 style="margin:0">Data yang baru saja diupload</h2><span class="sp"></span><span id="bSt"></span><button class="s" id="bClose" type="button">Tutup</button></div>
+<p class="hint" style="margin:0 0 10px" id="bInfo"></p>
+<div class="tw" style="max-height:340px;overflow:auto"><table><thead><tr><th>No</th><th>Nama</th><th>Tempat, tanggal lahir</th><th>Tingkat sekarang</th><th>Tingkat tujuan</th></tr></thead><tbody id="bTb"></tbody></table></div>
+</section>
 <section class="card" id="secList">
 <div class="kop pr"><h1 id="pNama"></h1><p id="pMeta"></p><p><b id="pDoj"></b></p></div>
 <div class="row np" style="margin-bottom:12px">
@@ -875,7 +880,13 @@ const ICERR='<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke=
 function popup(title,rows,note,err){$("pIc").className="pic"+(err?" e":"");$("pIc").innerHTML=err?ICERR:ICOK;$("pTitle").textContent=title;
  $("pBody").innerHTML=(rows&&rows.length?'<ul class="pl">'+rows.map(r=>`<li><span>${esc(r[0])}</span><b>${esc(r[1])}</b></li>`).join("")+'</ul>':"")+(note?`<p class="hint" style="margin:0 0 14px">${esc(note)}</p>`:"");
  $("popup").hidden=false;$("pOk").focus()}
-$("pOk").onclick=()=>{$("popup").hidden=true};
+let lastUp=null,scrollNew=false;
+function renderBaru(){const u=lastUp,box=$("secBaru");box.hidden=!u;if(!u)return;
+ $("bInfo").innerHTML=`Dojo <b>${esc(u.dojo)}</b> | Pengupload <b>${esc(u.nama)}</b> | File <b>${esc(u.file)}</b> | ${esc(fWaktu(u.tgl))}<br>${u.rows.length} peserta terbaca dari file${u.nb?`, ${u.nb} baris ditolak`:""}. Periksa daftar di bawah; kalau ada yang kurang atau salah, perbaiki file lalu upload ulang (tanpa mencentang "Tambahkan ke data yang sudah ada" agar tidak dobel).`;
+ $("bSt").innerHTML=u.st==="ok"?'<span class="b l">Tersimpan di database</span>':u.st==="wait"?'<span class="b u">Belum seluruhnya terkirim, dicoba lagi otomatis</span>':u.st==="local"?'<span class="b u">Tersimpan di perangkat ini</span>':'<span class="b u">Mengirim ke database…</span>';
+ $("bTb").innerHTML=u.rows.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nama)}</td><td>${esc(ttl(p))}</td><td>${esc(p.dari)}</td><td>${esc(p.ke)}</td></tr>`).join("")}
+$("bClose").onclick=()=>{lastUp=null;renderBaru()};
+$("pOk").onclick=()=>{$("popup").hidden=true;if(scrollNew){scrollNew=false;$("secBaru").scrollIntoView({behavior:"smooth",block:"start"})}};
 $("popup").addEventListener("click",e=>{if(e.target===$("popup"))$("popup").hidden=true});
 $("pvClose").onclick=()=>{$("pv").hidden=true};
 $("pv").addEventListener("click",e=>{if(e.target===$("pv"))$("pv").hidden=true});
@@ -915,13 +926,15 @@ function importFile(f){
    if(ok){const kk=dj0.nama.toLowerCase();data=add?data.concat(out):data.filter(p=>(p.dojo||"").toLowerCase()!==kk).concat(out)}
    save();render();
    const badTxt=[...bad].slice(0,5).join(", ");
+   if(ok){const lu=lastUp={dojo:dj0.nama,nama:meta.nama,file:f.name,tgl:new Date().toISOString(),rows:out.map(p=>({...p})),nb,st:"busy"};scrollNew=true;renderBaru();
+    if(window.Cloud)Cloud.flush().then(r=>{lu.st=r===true?"ok":r===false?"wait":"local";renderBaru()},()=>{lu.st="wait";renderBaru()});else{lu.st="local";renderBaru()}}
    if(!ok){
     const t=nb?"Import dibatalkan: kolom Dojo di file ("+badTxt+") berbeda dengan dojo yang dipilih ("+dj0.nama+").":"Tidak ada baris peserta terbaca. Pastikan baris pertama berisi judul kolom dan ada kolom Nama.";
     msg(t,1);popup("Import gagal",[["Dojo",dj0.nama],["Pengupload",meta.nama],["File",f.name]],t,true);return}
    const t=out.length+" peserta dari "+f.name+" berhasil diimport ke dojo "+dj0.nama+"."+(nb?" "+nb+" baris ditolak karena kolom Dojo berbeda dari dojo yang dipilih: "+badTxt+".":"");
    msg(t,nb>0);
    popup("Upload selesai",[["Nama dojo",dj0.nama],["Pengupload",meta.nama],["File",f.name],["Peserta masuk",String(out.length)]].concat(nb?[["Baris ditolak",String(nb)]]:[]).concat([["Mode",add?"Ditambahkan ke data lama":"Menggantikan data lama dojo ini"]]),
-    nb?"Baris ditolak karena kolom Dojo di file berbeda dengan dojo yang dipilih: "+badTxt+".":"Data peserta sudah masuk dan tersimpan.",false);
+    nb?"Baris ditolak karena kolom Dojo di file berbeda dengan dojo yang dipilih: "+badTxt+".":"Data peserta sudah masuk. Daftar yang baru Anda upload ditampilkan di halaman ini untuk Anda periksa.",false);
   }catch(err){const t="File tidak bisa dibaca. Gunakan format .xlsx, .xls, atau .csv.";msg(t,1);popup("Import gagal",[],t,true)}
  };
  r.readAsArrayBuffer(f);
