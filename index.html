@@ -237,9 +237,10 @@ body.anon .avw .dot{background:var(--mute)}
 
 
 <section class="card" id="secList">
-<div class="kop pr"><h1 id="pNama"></h1><p id="pMeta"></p></div>
+<div class="kop pr"><h1 id="pNama"></h1><p id="pMeta"></p><p><b id="pDoj"></b></p></div>
 <div class="row np" style="margin-bottom:12px">
 <h2 style="margin:0">Kelola daftar peserta</h2><span class="sp"></span>
+<select id="lDojo" style="max-width:220px" aria-label="Pilih dojo"></select>
 <input id="q" placeholder="Cari nama / dojo" style="max-width:200px">
 <button class="p" id="print" type="button">Cetak daftar</button>
 
@@ -563,10 +564,16 @@ function renderDash(){
 }
 $("dojAll").onclick=()=>{dojAll=!dojAll;renderDash()};
 
+function refreshL(){const e=$("lDojo"),v=e.value;
+ e.innerHTML=`<option value="">${logged?"Semua dojo":"Pilih dojo"}</option>`+dojos.map(d=>`<option>${esc(d.nama)}</option>`).join("");e.value=v;
+ $("q").placeholder=logged?"Cari nama / dojo":"Cari nama peserta"}
+$("lDojo").onchange=()=>render();
 function render(){
- const k=$("q").value.toLowerCase();
- const list=data.filter(p=>!k||(p.nama+" "+p.dojo).toLowerCase().includes(k));
- $("tb").innerHTML=list.length?list.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nama)}</td><td>${esc(p.dojo)}${findDojo(p.dojo)?"":' <span class="warn np">(belum terdaftar)</span>'}</td><td>${esc(p.wilayah)}</td><td>${esc(p.pelatih)}</td><td>${esc(ttl(p))}</td><td>${esc(p.dari)}</td><td>${esc(p.ke)}</td><td class="col-a np"><button class="s" data-e="${p.id}">Edit</button> ${delBtn(p)}</td></tr>`).join(""):`<tr><td colspan="9" class="empty">${data.length?"Tidak ada peserta yang cocok.":"Belum ada peserta. Import file Excel atau tambah peserta di atas."}</td></tr>`;
+ refreshL();
+ const k=$("q").value.toLowerCase(),dk=$("lDojo").value.trim().toLowerCase(),need=!logged&&!dk;
+ $("pDoj").textContent=dk?"Daftar peserta: "+$("lDojo").value:"Daftar peserta: semua dojo";
+ const list=need?[]:data.filter(p=>(!dk||(p.dojo||"").trim().toLowerCase()===dk)&&(!k||(p.nama+" "+p.dojo).toLowerCase().includes(k)));
+ $("tb").innerHTML=list.length?list.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nama)}</td><td>${esc(p.dojo)}${findDojo(p.dojo)?"":' <span class="warn np">(belum terdaftar)</span>'}</td><td>${esc(p.wilayah)}</td><td>${esc(p.pelatih)}</td><td>${esc(ttl(p))}</td><td>${esc(p.dari)}</td><td>${esc(p.ke)}</td><td class="col-a np"><button class="s" data-e="${p.id}">Edit</button> ${delBtn(p)}</td></tr>`).join(""):`<tr><td colspan="9" class="empty">${need?"Pilih dojo di atas untuk menampilkan daftar peserta dojo Anda.":data.length?"Tidak ada peserta yang cocok.":"Belum ada peserta. Import file Excel atau tambah peserta di atas."}</td></tr>`;
  $("tf").innerHTML=`<tr><td colspan="8">Total (${list.length} peserta)</td></tr>`;
  const sum=(a,f)=>a.reduce((s,p)=>s+f(p),0);
  const TA=sum(data,tot),LA=sum(data.filter(lunas),tot);
