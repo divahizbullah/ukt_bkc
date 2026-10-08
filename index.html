@@ -373,6 +373,7 @@ create policy "upload_update" on bkc_upload for update to authenticated using (t
 create policy "upload_delete" on bkc_upload for delete to authenticated using (true);</pre></div>
 <div class="stats" id="upStats"></div>
 <div class="row" style="margin-bottom:10px"><select id="upDojo" style="max-width:240px"></select><input id="upQ" placeholder="Cari pengupload / nama file" style="max-width:240px"></div>
+<p class="hint" id="upNote" style="margin:0 0 10px" hidden></p>
 <div class="tw"><table><thead><tr><th>No</th><th>Waktu upload</th><th>Nama dojo</th><th>Pengupload</th><th>Nama file</th><th class="n">Masuk</th><th class="n">Ditolak</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="upB"></tbody></table></div>
 </section></div>
 <div id="vMat" hidden>
@@ -958,8 +959,9 @@ function importFile(f){
     if(dn&&dn.toLowerCase()!==dj0.nama.toLowerCase()){nb++;bad.add(dn);return}
     out.push({id:Date.now()+Math.random().toString(36).slice(2,8),nama:String(m.nama).trim(),dojo:dj0.nama,wilayah:String(m.wilayah||"").trim()||dj0.wilayah,pelatih:dj0.pelatih,tmp:tmp,tgl:tgl,dari:String(m.dari||"").trim(),ke:String(m.ke||"").trim()});
    });
-   const add=$("append").checked,ok=out.length>0;
-   uploads.push({id:Date.now()+Math.random().toString(36).slice(2,8),tgl:new Date().toISOString(),dojo:dj0.nama,nama:meta.nama,file:f.name,ukuran:f.size,masuk:out.length,ditolak:nb,mode:add?"tambah":"ganti",status:ok?"berhasil":"gagal",fileData:f.size<=1048576?b64(buf):""});
+   const add=$("append").checked,ok=out.length>0,upId=Date.now()+Math.random().toString(36).slice(2,8),upTgl=new Date().toISOString();
+    out.forEach(p=>{p.upId=upId;p.upNama=meta.nama;p.upFile=f.name;p.upTgl=upTgl});
+   uploads.push({id:upId,tgl:upTgl,dojo:dj0.nama,nama:meta.nama,file:f.name,ukuran:f.size,masuk:out.length,ditolak:nb,mode:add?"tambah":"ganti",status:ok?"berhasil":"gagal",fileData:f.size<=1048576?b64(buf):""});
    try{localStorage.setItem("karate_upnama",meta.nama)}catch(x){}
    if(ok){const kk=dj0.nama.toLowerCase();data=add?data.concat(out):data.filter(p=>(p.dojo||"").toLowerCase()!==kk).concat(out)}
    save();render();
@@ -987,15 +989,22 @@ dz.addEventListener("drop",e=>importFile(e.dataTransfer.files[0]));
 
 // ===== Data & file upload (admin) =====
 const fSize=n=>n>=1048576?(n/1048576).toFixed(1)+" MB":Math.max(1,Math.round((+n||0)/1024))+" KB";
+// riwayat yang tidak ada di arsip: dibangun dari jejak upload di data peserta, atau dari rekapan (upload lama)
+function upVirtual(){
+ const have=new Set(uploads.map(u=>u.id)),cov=new Set(uploads.filter(u=>u.status!=="gagal").map(u=>String(u.dojo||"").trim().toLowerCase())),g=new Map(),rk=new Map(),dn=p=>(p.dojo||"").trim()||"(Tanpa dojo)";
+ data.forEach(p=>{if(p.upId&&!have.has(p.upId)){const o=g.get(p.upId)||{id:p.upId,tgl:p.upTgl||"",dojo:dn(p),nama:p.upNama||"",file:p.upFile||"",ukuran:0,masuk:0,ditolak:0,mode:"",status:"berhasil",virtual:"peserta"};o.masuk++;g.set(p.upId,o);cov.add(dn(p).toLowerCase())}});
+ data.forEach(p=>{const k=dn(p).toLowerCase();if(!p.upId&&!cov.has(k)){const o=rk.get(k)||{id:"rekap:"+k,tgl:"",dojo:dn(p),nama:"",file:"",ukuran:0,masuk:0,ditolak:0,mode:"",status:"berhasil",virtual:"rekap"};o.masuk++;rk.set(k,o)}});
+ return[...g.values(),...rk.values()]}
 function renderUp(){
  if($("vUp").hidden)return;
- const list=uploads.slice().sort((a,b)=>(b.tgl||"").localeCompare(a.tgl||"")),sel=$("upDojo"),sv=sel.value,
+ const list=uploads.concat(upVirtual()).sort((a,b)=>(b.tgl||"").localeCompare(a.tgl||"")||String(a.dojo).localeCompare(String(b.dojo))),sel=$("upDojo"),sv=sel.value,
   names=[...new Set(list.map(u=>u.dojo))].sort((a,b)=>String(a).localeCompare(String(b)));
  sel.innerHTML='<option value="">Semua dojo</option>'+names.map(n=>`<option>${esc(n)}</option>`).join("");sel.value=names.includes(sv)?sv:"";
  const q=$("upQ").value.toLowerCase(),l=list.filter(u=>(!sel.value||u.dojo===sel.value)&&(!q||((u.nama||"")+" "+(u.file||"")+" "+(u.dojo||"")).toLowerCase().includes(q)));
  const okN=list.filter(u=>u.status!=="gagal");
  $("upStats").innerHTML=`<div class="stat r"><small>Total upload</small><b>${list.length}</b></div><div class="stat g"><small>Peserta masuk</small><b>${okN.reduce((s,u)=>s+(+u.masuk||0),0)}</b></div><div class="stat"><small>Dojo yang mengupload</small><b>${names.length}</b></div><div class="stat y"><small>Upload gagal</small><b>${list.length-okN.length}</b></div>`;
- $("upB").innerHTML=l.length?l.map((u,i)=>`<tr><td>${i+1}</td><td>${esc(fWaktu(u.tgl))}</td><td>${esc(u.dojo)}</td><td>${esc(u.nama)}</td><td class="fn" title="${esc(u.file)}">${esc(u.file)}<br><span class="hint">${esc(fSize(u.ukuran))} | ${u.mode==="tambah"?"ditambahkan":"mengganti"}</span></td><td class="n">${+u.masuk||0}</td><td class="n">${+u.ditolak||0}</td><td><span class="b ${u.status==="gagal"?"x":"l"}">${u.status==="gagal"?"Gagal":"Berhasil"}</span></td><td><button class="s" data-uv="${esc(u.id)}">Lihat</button> <button class="s" data-ud="${esc(u.id)}">Unduh</button> <button class="s" data-ux="${esc(u.id)}">Hapus</button></td></tr>`).join(""):`<tr><td colspan="9" class="empty">${list.length?"Tidak ada upload yang cocok.":"Belum ada file yang diupload."}</td></tr>`;
+ $("upB").innerHTML=l.length?l.map((u,i)=>`<tr><td>${i+1}</td><td>${u.tgl?esc(fWaktu(u.tgl)):'<span class="hint">Tidak tercatat</span>'}</td><td>${esc(u.dojo)}</td><td>${u.nama?esc(u.nama):'<span class="hint">(tidak tercatat)</span>'}</td><td class="fn" title="${esc(u.file)}">${u.virtual?`${u.file?esc(u.file)+"<br>":""}<span class="hint">${u.virtual==="peserta"?"Dibangun dari data peserta. File asli tidak diarsipkan.":"Sudah ada di rekapan sebelum arsip aktif."}</span>`:`${esc(u.file)}<br><span class="hint">${esc(fSize(u.ukuran))} | ${u.mode==="tambah"?"ditambahkan":"mengganti"}</span>`}</td><td class="n">${+u.masuk||0}</td><td class="n">${+u.ditolak||0}</td><td>${u.virtual?'<span class="b u">Dari '+(u.virtual==="peserta"?"data peserta":"rekapan")+'</span>':`<span class="b ${u.status==="gagal"?"x":"l"}">${u.status==="gagal"?"Gagal":"Berhasil"}</span>`}</td><td>${u.virtual?'<span class="hint">Tidak ada arsip file</span>':`<button class="s" data-uv="${esc(u.id)}">Lihat</button> <button class="s" data-ud="${esc(u.id)}">Unduh</button> <button class="s" data-ux="${esc(u.id)}">Hapus</button>`}</td></tr>`).join(""):`<tr><td colspan="9" class="empty">${list.length?"Tidak ada upload yang cocok.":"Belum ada file yang diupload."}</td></tr>`;
+ const nv=list.filter(u=>u.virtual).length;$("upNote").hidden=!nv;$("upNote").textContent=nv+" riwayat ditampilkan dari data peserta/rekapan karena catatan upload aslinya tidak tersimpan di database. Nama pengupload, waktu, dan file asli hanya tercatat untuk upload baru.";
  $("upSql").hidden=!(window.Cloud&&!Cloud.upReady());
 }
 $("upDojo").onchange=renderUp;$("upQ").oninput=renderUp;
