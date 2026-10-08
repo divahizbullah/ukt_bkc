@@ -448,7 +448,7 @@ const SUPABASE_ANON_KEY='sb_publishable_oaBsZpU4HOdgwxN5wVpZgQ_4zt-GY7u';
 const LOGIN_DOMAIN="bkc.local"; // cadangan: username tanpa profil dicoba sebagai username@bkc.local
 var Cloud=(()=>{
  const TB={data:"bkc_peserta",dojos:"bkc_dojo",keluar:"bkc_pengeluaran",req:"bkc_hapus_req",up:"bkc_upload"},J=JSON.stringify,$=id=>document.getElementById(id);
- let sb=null,api=null,sess=null,prof=null,ready=false,running=null,timer=null,retry=null,poll=null,snap={data:{},dojos:{},keluar:{},req:{},up:{}},noReq=false,noUp=false,infoSnap="{}",logoSnap="";
+ let sb=null,api=null,sess=null,prof=null,ready=false,running=null,timer=null,retry=null,poll=null,snap={data:{},dojos:{},keluar:{},req:{},up:{}},noReq=false,noUp=false,sentUp=new Set(),infoSnap="{}",logoSnap="";
  const KEYS=()=>sess?["data","dojos","keluar","req","up"]:["data","dojos","req"],DK=()=>sess?KEYS():KEYS().concat("up"),WK=()=>(sess?["data","dojos","keluar","req","up"]:["data","req","up"]).filter(k=>(k!=="req"||!noReq)&&(k!=="up"||!noUp));
  try{sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY)}catch(e){}
  const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}};
@@ -468,7 +468,7 @@ var Cloud=(()=>{
   return{st,sn,info:J(st.info),logo:st.logo}}
  function diff(){const cur=api.get(),out={};
   DK().forEach(k=>{const m={};(cur[k]||[]).forEach(it=>{if(!it.id)it.id=nid();m[it.id]=J(it)});
-   out[k]={m,up:Object.keys(m).filter(id=>(snap[k]||{})[id]!==m[id]).map(id=>({id,data:JSON.parse(m[id])})),del:(k==="up"&&!sess)?[]:Object.keys(snap[k]||{}).filter(id=>!(id in m))}});
+   out[k]={m,up:Object.keys(m).filter(id=>(snap[k]||{})[id]!==m[id]&&!(k==="up"&&!sess&&sentUp.has(id))).map(id=>({id,data:JSON.parse(m[id])})),del:(k==="up"&&!sess)?[]:Object.keys(snap[k]||{}).filter(id=>!(id in m))}});
   out.info=J(cur.info||{});return out}
  const dirty=()=>{if(!ready)return false;const d=diff();return WK().some(k=>d[k].up.length||d[k].del.length)||(!!sess&&d.info!==infoSnap)};
  const sig=s=>J([(sess?["data","dojos","keluar","req","up"]:["data","dojos","keluar","req"]).map(k=>(s[k]||[]).map(x=>x.id+J(x)).sort()),J(s.info||{})]);
@@ -477,11 +477,11 @@ var Cloud=(()=>{
   if(running)return running.then(()=>flush());
   running=(async()=>{try{const d=diff(),now=()=>new Date().toISOString();badge("Menyimpan…","busy");
    for(const k of WK()){try{
-    for(let i=0;i<d[k].up.length;i+=500){const{error}=await sb.from(TB[k]).upsert(d[k].up.slice(i,i+500).map(x=>({id:x.id,data:x.data,updated_at:now()})),{onConflict:"id"});if(error)throw error}
+    for(let i=0;i<d[k].up.length;i+=500){const{error}=await sb.from(TB[k]).upsert(d[k].up.slice(i,i+500).map(x=>({id:x.id,data:x.data,updated_at:now()})),(k==="up"&&!sess)?{onConflict:"id",ignoreDuplicates:true}:{onConflict:"id"});if(error)throw error}
     for(let i=0;i<d[k].del.length;i+=200){const ch=d[k].del.slice(i,i+200),{error}=await sb.from(TB[k]).delete().in("id",ch);if(error)throw error;
      const c=await sb.from(TB[k]).select("id").in("id",ch);if(c.error)throw c.error;
      if(c.data.length){const e=new Error("row-level security: penghapusan ditolak database");e.code="42501";throw e}}
-    snap[k]=d[k].m}catch(e){if(k==="up"&&(e.code==="PGRST205"||e.code==="42P01"||e.code==="42501"||/schema cache|does not exist|row-level security|permission denied/i.test(String((e&&e.message)||e)))){noUp=true;snap.up=d.up.m}else throw e}}
+    if(k==="up"&&!sess)d.up.up.forEach(x=>sentUp.add(x.id));snap[k]=d[k].m}catch(e){if(k==="up"&&(e.code==="PGRST205"||e.code==="42P01"||e.code==="42501"||/schema cache|does not exist|row-level security|permission denied/i.test(String((e&&e.message)||e)))){noUp=true;snap.up=d.up.m;console.warn("Arsip upload tidak tersimpan:",e)}else throw e}}
    if(sess&&d.info!==infoSnap){const{error}=await sb.from("bkc_pengaturan").upsert({key:"info",value:JSON.parse(d.info),updated_at:now()},{onConflict:"key"});if(error)throw error;infoSnap=d.info}
    if(!dirty())ls("karate_dirty",null);badge("Tersimpan di database","ok");return true
   }catch(e){fail(e);return false}finally{running=null}})();return running}
