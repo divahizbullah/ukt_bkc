@@ -184,8 +184,33 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 .lgd{margin:0 0 14px;font-size:13px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
 @media print{.mg{break-inside:avoid;margin-bottom:18px}.mg+.mg{break-before:page}.nk{background:none!important;color:#000!important;padding:0}.bx{border-color:#000}.mt{min-width:0}.mt tr.kt td{background:#eee!important;color:#000}.mgh{display:block;text-align:center;font-weight:800;font-size:14px;border-bottom:3px double #000;padding-bottom:6px;margin-bottom:10px}.mgh span{display:block;font-weight:400;font-size:11px}#mtBody .mg:first-child .mgh,#gtBody .mg:first-child .mgh{display:none}}
 </style>
+<style>
+@page ba{size:A4 portrait;margin:16mm}
+#baPrint{display:none}
+.ba{font-family:"Times New Roman",Times,serif;color:#000;background:#fff;max-width:660px;margin:0 auto;padding:22px 26px;font-size:13px;line-height:1.35}
+.ba h2{text-align:center;font-size:20px;margin:0 0 2px;text-decoration:underline;letter-spacing:.02em}
+.ba h3{text-align:center;font-size:14px;margin:18px 0 10px;text-decoration:underline}
+.ba .bas{text-align:center;margin:0 0 20px;font-size:13px}
+.ba .baw{margin:0 0 4px;display:flex;gap:6px}.ba .baw b{width:90px;flex:none}
+.ba table{border-collapse:collapse;width:100%;min-width:0;color:#000}
+.ba td,.ba th{border:1px solid #000;padding:6px 8px;font-size:12.5px;white-space:normal;color:#000;text-align:left}
+.ba .bat td{height:40px;vertical-align:middle;position:relative}.ba .bat td:first-child{width:54%;padding-left:24px}
+.ba .bat i{position:absolute;left:6px;bottom:4px;font-size:10px;font-style:normal}
+.ba .bab{margin-top:26px}.ba .bab th{font-size:12.5px}.ba .bab td{height:34px}.ba .bab .r{text-align:right}
+.ba .bad{text-align:center;margin:30px 0 0}
+.ba .bag{display:flex;justify-content:space-around;margin-top:14px;text-align:center}
+.ba .bag div{width:42%}.ba .bag b{display:block}.ba .bag span{display:block;margin-top:66px;border-top:1px solid #000;min-height:1.4em;padding-top:2px}
+.baWrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin-top:12px;background:#fff}
+@media print{
+ body.pb>*:not(#baPrint){display:none!important}
+ body.pb{background:#fff}
+ body.pb #baPrint{display:block;page:ba}
+ body.pb .ba{max-width:none;padding:0}
+}
+</style>
 </head>
-<body>
+<body><div id="baPrint"></div>
+
 <div id="loginBox" class="np" hidden><form id="loginForm" class="card" style="width:100%;max-width:340px">
 <h2>Masuk</h2><p class="hint" style="margin:0 0 12px">Masuk untuk membuka semua menu dan mengubah data.</p>
 <label for="lgEmail">Username atau email</label><input id="lgEmail" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required>
@@ -278,6 +303,12 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 <div class="np" style="margin-bottom:12px"><label for="dSel">Pilih dojo yang sudah masuk rekapan untuk melihat data peserta, setoran, status bayar, dan kwitansi</label><select id="dSel" style="max-width:380px"></select></div>
 <div id="dtBody"></div>
 </section>
+<section class="card np" id="secBADoj" hidden><h2 id="baTD">Berita acara dojo</h2>
+<p class="hint" style="margin:0 0 12px">Berita acara penyetoran biaya ujian khusus dojo yang dipilih. Penyetor diisi otomatis dengan nama pelatih dojo.</p>
+<div class="grid" id="baFD"></div>
+<div class="row" style="margin-top:12px"><button class="p" id="baPD" type="button">Cetak berita acara</button><button id="baDD" type="button">Simpan PDF</button></div>
+<div class="baWrap"><div id="baVD"></div></div>
+</section>
 <section class="card" id="secRekap">
 <div class="kop pr"><h1 id="rNama"></h1><p id="rMeta"></p><p><b>Rekap Pembayaran per Dojo</b></p></div>
 <div class="row np" style="margin-bottom:12px"><h2 style="margin:0">Rekap pembayaran per dojo</h2><span class="sp"></span><button class="p" id="printRekap" type="button">Cetak rekap</button></div>
@@ -303,6 +334,12 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 <div><label for="iOrg">Penyelenggara</label><input id="iOrg" placeholder="Nama perguruan"></div>
 <div><label for="iTpl">Link template Excel (Google Drive)</label><input id="iTpl" type="url" placeholder="https://drive.google.com/file/d/..."></div>
 </div>
+</section>
+<section class="card np" id="secBAAdm"><h2>Berita acara setoran UKT (seluruh dojo)</h2>
+<p class="hint" style="margin:0 0 12px">Berita acara penyetoran biaya ujian untuk semua peserta di semua dojo. Isian di bawah tersimpan otomatis dan dipakai juga oleh berita acara per dojo di menu Dojo. Jumlah peserta per tingkat dihitung otomatis dari kolom <b>Tingkat Tujuan</b>.</p>
+<div class="grid" id="baFA"></div>
+<div class="row" style="margin-top:12px"><button class="p" id="baPA" type="button">Cetak berita acara</button><button id="baDA" type="button">Simpan PDF</button></div>
+<div class="baWrap"><div id="baVA"></div></div>
 </section>
 <section class="card np"><h2>Backup data</h2>
 <p class="hint" style="margin:0 0 12px">Ada dua cara menyimpan backup: <b>unduh langsung ke perangkat</b> (tanpa email), atau kirim lewat email. Backup berisi semua peserta, dojo, info ujian, dan setoran/keuangan.</p>
@@ -999,6 +1036,100 @@ const dz=$("drop");
 ["dragleave","drop"].forEach(v=>dz.addEventListener(v,e=>{e.preventDefault();dz.classList.remove("on")}));
 dz.addEventListener("drop",e=>importFile(e.dataTransfer.files[0]));
 
+
+// ===== Berita acara penyetoran biaya ujian (UKT) =====
+const BA_LV=[[6,"VI","Kuning"],[5,"V","Oranye"],[4,"IV","Hijau"],[3,"III","Biru"],[2,"II","Coklat"],[1,"I","Coklat"]];
+const BA_ROM={i:1,ii:2,iii:3,iv:4,v:5,vi:6,vii:7,viii:8,ix:9,x:10};
+const baKyu=s=>{const m=String(s||"").match(/kyu\s*(\d+|[ivx]+)\b/i);if(!m)return 0;return /^\d+$/.test(m[1])?+m[1]:(BA_ROM[m[1].toLowerCase()]||0)};
+const baS=()=>info.ba||(info.ba={});
+const baNum=n=>(+n||0).toLocaleString("id-ID");
+const baDots=n=>".".repeat(n);
+function baModel(key){
+ const list=key?data.filter(p=>((p.dojo||"").trim()||"(Tanpa dojo)").toLowerCase()===key):data.slice();
+ const d=key&&list.length?findDojo(list[0].dojo):null,s=baS(),tarif=+info.tarif||0,dasar=s.dasar||(tarif>0?"setoran":"ujian"),n=list.length;
+ const cnt={};list.forEach(p=>{const k=baKyu(p.ke);cnt[k]=(cnt[k]||0)+1});
+ const rows=BA_LV.map(([k,r,c])=>({t:"Ujian ke Kyu "+r+" Sabuk "+c,n:cnt[k]||0}));
+ Object.keys(cnt).map(Number).filter(k=>k<1||k>6).sort((a,b)=>b-a).forEach(k=>rows.push({t:k?"Ujian ke Kyu "+k:"Tingkat lain / belum diisi",n:cnt[k]}));
+ let bp=0,jml=0,mixed=false;
+ if(dasar==="setoran"){bp=tarif;jml=n*tarif}
+ else{const fs=[...new Set(list.map(p=>fee(p,"ujian")))];mixed=fs.length>1;bp=mixed?0:(fs[0]||0);jml=list.reduce((a,p)=>a+tot(p),0)}
+ const wl=[...new Set(list.map(p=>(p.wilayah||(findDojo(p.dojo)||{}).wilayah||"").trim()).filter(Boolean))];
+ const wil=key?(d?d.wilayah:wl[0])||"":(wl.length&&wl.length<=3?wl.join(", "):"Seluruh Wilayah");
+ const pel=key?((d?d.pelatih:list[0]&&list[0].pelatih)||""):(s.peny||"");
+ const dt=s.tgl?new Date(s.tgl+"T12:00:00"):new Date();
+ return{key,dojo:key?(d?d.nama:(list[0]&&list[0].dojo)||""):"",wil,rows,n,bp,jml,mixed,lbl:dasar==="setoran"?"Setoran ke Cabang":"Biaya Ujian",
+  per:s.per||"",thn:s.thn||(info.tgl||"").slice(0,4)||String(new Date().getFullYear()),kota:s.kota||"Bogor",
+  tgl:dt.toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}),peny:pel,pen:s.pen||""}}
+function baHtml(m){
+ const has=m.n>0,v=(x,w)=>x?esc(x):"…".repeat(w),rp2=x=>has?baNum(x):"…………";
+ return `<div class="ba"><h2>BERITA ACARA</h2>
+ <p class="bas">Penyetoran Biaya Ujian Kenaikan Tingkat (UKT) Periode ${v(m.per,6)} Tahun ${esc(m.thn)}</p>
+ <p class="baw"><b>WILAYAH</b><span>: ${v(m.wil,10)}</span></p>${m.dojo?`<p class="baw"><b>DOJO</b><span>: ${esc(m.dojo)}</span></p>`:""}
+ <h3>PESERTA UKT</h3>
+ <table class="bat"><tbody>${m.rows.map((r,i)=>`<tr><td><i>${i+1}</i>${esc(r.t)}</td><td>: ${has?"<b>"+r.n+"</b>":"……………"} Orang</td></tr>`).join("")}</tbody></table>
+ <table class="bab"><tbody><tr><th colspan="3">${m.lbl}</th></tr>
+ <tr><td>${m.mixed?"Rp. (beragam)":has||m.bp?"Rp. "+baNum(m.bp):"Rp. ……………"}</td><td>X ${has?"<b>"+m.n+"</b>":"……"} Orang</td><td>Rp. ${rp2(m.jml)}</td></tr>
+ <tr><td colspan="2" class="r"><b>Jumlah Setoran</b></td><td><b>Rp. ${rp2(m.jml)}</b></td></tr></tbody></table>
+ <p class="bad">${esc(m.kota)}, ${esc(m.tgl)}</p>
+ <div class="bag"><div><b>Penyetor</b><span>${esc(m.peny)}</span></div><div><b>Penerima</b><span>${esc(m.pen)}</span></div></div></div>`}
+function baPrint(m){if(!m.n&&!confirm("Belum ada peserta. Cetak berita acara kosong untuk diisi manual?"))return;$("baPrint").innerHTML=baHtml(m);doPrint("pb")}
+function baPdf(m){
+ const W=595,H=842,ops=[],E=t=>String(t).replace(/[^\x00-\xFF]/g,"?").replace(/([\\()])/g,"\\$1"),
+  sw=(t,z,b)=>[...String(t)].reduce((a,c)=>a+(/[0-9]/.test(c)?556:(HW[c]||556)),0)*z/1000*(b?1.06:1),
+  T=(t,x,y,z,b)=>ops.push("BT /"+(b?"F2":"F1")+" "+z+" Tf "+x.toFixed(2)+" "+(H-y).toFixed(2)+" Td ("+E(t)+") Tj ET"),
+  TC=(t,cx,y,z,b)=>T(t,cx-sw(t,z,b)/2,y,z,b),TR=(t,rx,y,z,b)=>T(t,rx-sw(t,z,b),y,z,b),
+  R=(x,y,w,h)=>ops.push(x.toFixed(2)+" "+(H-y-h).toFixed(2)+" "+w.toFixed(2)+" "+h.toFixed(2)+" re S"),
+  L=(x1,y1,x2)=>ops.push(x1.toFixed(2)+" "+(H-y1).toFixed(2)+" m "+x2.toFixed(2)+" "+(H-y1).toFixed(2)+" l S"),
+  has=m.n>0,X0=60,TW=475,CX=W/2;
+ ops.push(".8 w");
+ TC("BERITA ACARA",CX,70,18,1);L(CX-sw("BERITA ACARA",18,1)/2,73,CX+sw("BERITA ACARA",18,1)/2);
+ let sub="Penyetoran Biaya Ujian Kenaikan Tingkat (UKT) Periode "+(m.per||"..........")+" Tahun "+m.thn,z=10.5;
+ if(sw(sub,z,0)>TW)z=z*TW/sw(sub,z,0);TC(sub,CX,92,z,0);
+ let y=130;T("WILAYAH",X0,y,11,1);T(": "+(m.wil||".................."),X0+80,y,11,0);
+ if(m.dojo){y+=18;T("DOJO",X0,y,11,1);T(": "+m.dojo,X0+80,y,11,0)}
+ y+=38;TC("PESERTA UKT",CX,y,12,1);L(CX-sw("PESERTA UKT",12,1)/2,y+3,CX+sw("PESERTA UKT",12,1)/2);
+ y+=16;const w1=TW*.535,rh=35;
+ m.rows.forEach((r,i)=>{const t=y+i*rh;R(X0,t,w1,rh);R(X0+w1,t,TW-w1,rh);
+  T(String(i+1),X0+5,t+rh-5,8,0);T(r.t,X0+20,t+rh/2+3.5,10,0);
+  T(": "+(has?String(r.n):"............")+" Orang",X0+w1+8,t+rh/2+3.5,10,0)});
+ y+=m.rows.length*rh+26;
+ const c1=190,c2=140,c3=TW-c1-c2,money=x=>has?baNum(x):"...............";
+ R(X0,y,c1,20);R(X0+c1,y,c2,20);R(X0+c1+c2,y,c3,20);T(m.lbl,X0+6,y+14,10,1);
+ y+=20;R(X0,y,c1,34);R(X0+c1,y,c2,34);R(X0+c1+c2,y,c3,34);
+ T(m.mixed?"Rp. (beragam)":"Rp. "+(has||m.bp?baNum(m.bp):"..............."),X0+6,y+21,10,0);
+ T("X "+(has?String(m.n):".......")+" Orang",X0+c1+10,y+21,10,0);T("Rp. "+money(m.jml),X0+c1+c2+8,y+21,10,0);
+ y+=34;R(X0,y,c1+c2,36);R(X0+c1+c2,y,c3,36);TR("Jumlah Setoran",X0+c1+c2-8,y+22,10,1);T("Rp. "+money(m.jml),X0+c1+c2+8,y+22,10,1);
+ y+=36+46;TC(m.kota+", "+m.tgl,CX,y,11,0);
+ y+=30;const c=[X0+TW*.22,X0+TW*.78];
+ TC("Penyetor",c[0],y,11,1);TC("Penerima",c[1],y,11,1);
+ const ly=y+90;[[m.peny,c[0]],[m.pen,c[1]]].forEach(([nm,cx])=>{if(nm)TC(nm,cx,ly-4,10,1);L(cx-75,ly,cx+75)});
+ const ct=ops.join("\n"),objs=["<< /Type /Catalog /Pages 2 0 R >>","<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+  "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 "+W+" "+H+"] /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> /Contents 4 0 R >>",
+  "<< /Length "+ct.length+" >>\nstream\n"+ct+"\nendstream",
+  "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>",
+  "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>"];
+ let out="%PDF-1.4\n";const off=[];objs.forEach((o,i)=>{off.push(out.length);out+=(i+1)+" 0 obj\n"+o+"\nendobj\n"});
+ const xr=out.length;out+="xref\n0 "+(objs.length+1)+"\n0000000000 65535 f \n"+off.map(o=>String(o).padStart(10,"0")+" 00000 n \n").join("")+"trailer\n<< /Size "+(objs.length+1)+" /Root 1 0 R >>\nstartxref\n"+xr+"\n%%EOF";
+ const u=new Uint8Array(out.length);for(let i=0;i<out.length;i++)u[i]=out.charCodeAt(i)&255;return u}
+async function baSave(m){
+ if(!m.n&&!confirm("Belum ada peserta. Simpan berita acara kosong untuk diisi manual?"))return;
+ const dl=await getDl();if(!dl){alert("Unduhan tidak tersedia di tampilan ini.");return}
+ const nm="Berita_Acara_UKT"+(m.dojo?"_"+m.dojo.replace(/[^A-Za-z0-9]+/g,"_").replace(/^_|_$/g,""):"_Semua_Dojo")+".pdf";
+ try{await dl.save({filename:nm,data:baPdf(m)})}catch(e){if(!e||e.code!=="declined")alert("File gagal disimpan.")}}
+function baForm(p,full){
+ const f=(k,l,h,t)=>`<div><label for="${p}${k}">${l}</label><input id="${p}${k}" data-k="${k}"${t?` type="${t}"`:""}${h?` placeholder="${h}"`:""}></div>`;
+ return f("per","Periode","mis. I atau Oktober")+f("thn","Tahun","2026")+f("kota","Kota","Bogor")+f("tgl","Tanggal","","date")+(full?f("peny","Nama penyetor","Opsional"):"")+f("pen","Nama penerima","Bendahara cabang")+
+ `<div><label for="${p}dasar">Nominal per peserta</label><select id="${p}dasar" data-k="dasar"><option value="">Otomatis</option><option value="ujian">Biaya ujian dojo</option><option value="setoran">Setoran ke cabang</option></select></div>`}
+$("baFA").innerHTML=baForm("baA",true);$("baFD").innerHTML=baForm("baD",false);
+function baFill(){const s=baS();["baFA","baFD"].forEach(id=>$(id).querySelectorAll("[data-k]").forEach(el=>{if(el!==document.activeElement)el.value=s[el.dataset.k]||""}))}
+function baRefresh(){baFill();$("baVA").innerHTML=baHtml(baModel(""));
+ const on=!!selDoj&&data.some(p=>((p.dojo||"").trim()||"(Tanpa dojo)").toLowerCase()===selDoj);$("secBADoj").hidden=!on;
+ if(on){const m=baModel(selDoj);$("baTD").textContent="Berita acara dojo "+m.dojo;$("baVD").innerHTML=baHtml(m)}}
+["baFA","baFD"].forEach(id=>{const h=e=>{const k=e.target.dataset.k;if(!k)return;baS()[k]=e.target.value;save();baRefresh()};$(id).addEventListener("input",h);$(id).addEventListener("change",h)});
+$("baPA").onclick=()=>baPrint(baModel(""));$("baDA").onclick=()=>baSave(baModel(""));
+$("baPD").onclick=()=>{if(selDoj)baPrint(baModel(selDoj))};$("baDD").onclick=()=>{if(selDoj)baSave(baModel(selDoj))};
+{const r0=render,d0=renderDet;render=function(){r0.apply(this,arguments);baRefresh()};renderDet=function(){d0.apply(this,arguments);baRefresh()}}
+baRefresh();
 
 // ===== Data & file upload (admin) =====
 const fSize=n=>n>=1048576?(n/1048576).toFixed(1)+" MB":Math.max(1,Math.round((+n||0)/1024))+" KB";
