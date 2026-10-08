@@ -305,9 +305,8 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 <div id="dtBody"></div>
 </section>
 <section class="card np" id="secBADoj" hidden><h2 id="baTD">Berita acara dojo</h2>
-<p class="hint" style="margin:0 0 12px">Berita acara penyetoran biaya ujian dojo ini sudah terisi otomatis: kop surat dari info ujian, penyetor dari nama pelatih dojo, serta periode, tanggal, dan penerima dari pengaturan di menu Administrator. Tinggal cetak atau simpan PDF.</p>
+<p class="hint" style="margin:0 0 12px">Berita acara penyetoran biaya ujian dojo ini sudah terisi otomatis: kop surat dari info ujian, penyetor dari nama pelatih dojo, serta periode, tanggal, dan penerima dari pengaturan di menu Administrator. Tinggal klik Cetak atau Simpan PDF; dokumen baru dibuat saat tombol ditekan.</p>
 <div class="row"><button class="p" id="baPD" type="button">Cetak berita acara</button><button id="baDD" type="button">Simpan PDF</button></div>
-<div class="baWrap"><div id="baVD"></div></div>
 </section>
 <section class="card" id="secRekap">
 <div class="kop pr"><h1 id="rNama"></h1><p id="rMeta"></p><p><b>Rekap Pembayaran per Dojo</b></p></div>
@@ -336,10 +335,9 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 </div>
 </section>
 <section class="card np" id="secBAAdm"><h2>Berita acara setoran UKT (seluruh dojo)</h2>
-<p class="hint" style="margin:0 0 12px">Berita acara penyetoran biaya ujian untuk semua peserta di semua dojo. Isian di bawah tersimpan otomatis dan dipakai juga oleh berita acara per dojo di menu Dojo, sehingga pelatih dojo tidak perlu mengisi lagi. Kop surat memakai Nama kegiatan, Penyelenggara, Tempat, dan Tanggal dari kartu Info ujian (serta logo jika sudah dipasang). Jumlah peserta per tingkat dihitung otomatis dari kolom <b>Tingkat Tujuan</b>.</p>
+<p class="hint" style="margin:0 0 12px">Berita acara penyetoran biaya ujian untuk semua peserta di semua dojo. Isian di bawah tersimpan otomatis (dokumen tidak ditampilkan di halaman agar ringan; dokumen dibuat saat Anda klik Cetak atau Simpan PDF) dan dipakai juga oleh berita acara per dojo di menu Dojo, sehingga pelatih dojo tidak perlu mengisi lagi. Kop surat memakai Nama kegiatan, Penyelenggara, Tempat, dan Tanggal dari kartu Info ujian (serta logo jika sudah dipasang). Jumlah peserta per tingkat dihitung otomatis dari kolom <b>Tingkat Tujuan</b>.</p>
 <div class="grid" id="baFA"></div>
 <div class="row" style="margin-top:12px"><button class="p" id="baPA" type="button">Cetak berita acara</button><button id="baDA" type="button">Simpan PDF</button></div>
-<div class="baWrap"><div id="baVA"></div></div>
 </section>
 <section class="card np"><h2>Backup data</h2>
 <p class="hint" style="margin:0 0 12px">Ada dua cara menyimpan backup: <b>unduh langsung ke perangkat</b> (tanpa email), atau kirim lewat email. Backup berisi semua peserta, dojo, info ujian, dan setoran/keuangan.</p>
@@ -1139,9 +1137,9 @@ function baForm(p,full){
  `<div><label for="${p}dasar">Nominal per peserta</label><select id="${p}dasar" data-k="dasar"><option value="">Otomatis</option><option value="ujian">Biaya ujian dojo</option><option value="setoran">Setoran ke cabang</option></select></div>`}
 $("baFA").innerHTML=baForm("baA",true);
 function baFill(){const s=baS();["baFA"].forEach(id=>$(id).querySelectorAll("[data-k]").forEach(el=>{if(el!==document.activeElement)el.value=s[el.dataset.k]||""}))}
-function baRefresh(){baFill();$("baVA").innerHTML=baHtml(baModel(""));
+function baRefresh(){baFill();
  const on=!!selDoj&&data.some(p=>((p.dojo||"").trim()||"(Tanpa dojo)").toLowerCase()===selDoj);$("secBADoj").hidden=!on;
- if(on){const m=baModel(selDoj);$("baTD").textContent="Berita acara dojo "+m.dojo;$("baVD").innerHTML=baHtml(m)}}
+ if(on){const d=findDojo(selDoj);$("baTD").textContent="Berita acara dojo "+(d?d.nama:selDoj)}}
 ["baFA"].forEach(id=>{const h=e=>{const k=e.target.dataset.k;if(!k)return;baS()[k]=e.target.value;save();baRefresh()};$(id).addEventListener("input",h);$(id).addEventListener("change",h)});
 $("baPA").onclick=()=>baPrint(baModel(""));$("baDA").onclick=()=>baSave(baModel(""));
 $("baPD").onclick=()=>{if(selDoj)baPrint(baModel(selDoj))};$("baDD").onclick=()=>{if(selDoj)baSave(baModel(selDoj))};
