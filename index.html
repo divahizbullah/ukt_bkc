@@ -182,6 +182,23 @@ body.anon .avw .dot{background:var(--mute)}
 <label for="lgPass" style="margin-top:10px">Kata sandi</label><input id="lgPass" type="password" autocomplete="current-password" required>
 <button class="p" style="margin-top:14px;width:100%" type="submit">Masuk</button><button id="lgCancel" type="button" style="margin-top:8px;width:100%">Batal</button><div id="lgMsg" class="m e" role="alert"></div>
 </form></div>
+<div id="fModal" class="ov np" hidden><div class="mdl wide" style="max-width:760px" role="dialog" aria-modal="true" aria-labelledby="fTitle">
+<h2 id="fTitle">Tambah peserta</h2>
+<p class="m e" id="noDojo" hidden>Belum ada dojo terdaftar. Admin perlu mendaftarkan dojo dulu (menu Administrator, perlu login) sebelum peserta bisa ditambahkan.</p>
+<div class="grid">
+<div><label for="fNama">Nama</label><input id="fNama"></div>
+<div><label for="fDojo">Dojo (terdaftar)</label><select id="fDojo"></select></div>
+<div><label for="fWil">Wilayah (terisi dari dojo, bisa diubah)</label><input id="fWil"></div>
+<div><label for="fPelatih">Nama pelatih (otomatis)</label><input id="fPelatih" readonly></div>
+<div><label for="fTmp">Tempat lahir</label><input id="fTmp"></div>
+<div><label for="fTgl">Tanggal lahir</label><input id="fTgl" type="date"></div>
+<div><label for="fDari">Tingkat sekarang</label><input id="fDari" list="tk"></div>
+<div><label for="fKe">Tingkat tujuan</label><input id="fKe" list="tk"></div>
+</div>
+<datalist id="tk"><option>Kyu 7 (Putih)<option>Kyu 6 (Kuning)<option>Kyu 5 (Oranye)<option>Kyu 4 (Hijau)<option>Kyu 3 (Biru)<option>Kyu 2 (Cokelat)<option>Kyu 1 (Cokelat)</datalist>
+<div id="fMsg" class="m e" role="alert"></div>
+<div class="row" style="margin-top:12px"><button class="p" id="save" type="button">Simpan peserta</button><button id="cancel" type="button">Batal</button></div>
+</div></div>
 <div id="popup" class="ov np" hidden><div class="mdl" role="dialog" aria-modal="true" aria-labelledby="pTitle"><div class="pic" id="pIc"></div><h2 id="pTitle"></h2><div id="pBody"></div><button class="p" id="pOk" type="button">OK</button></div></div>
 <div id="pv" class="ov np" hidden><div class="mdl wide" role="dialog" aria-modal="true" aria-labelledby="pvTitle"><div class="row"><h2 id="pvTitle" style="margin:0;font-size:15px"></h2><span class="sp"></span><button class="s" id="pvClose" type="button">Tutup</button></div><div id="pvBody" class="tw" style="margin-top:10px;max-height:65vh"></div></div></div>
 <div id="cloudBar" class="np"><span id="cloudBadge" data-s="busy">Menghubungkan ke database…</span></div>
@@ -210,24 +227,9 @@ body.anon .avw .dot{background:var(--mute)}
 <p class="hint">Baris pertama harus berisi judul kolom: <b>Nama</b>, <b>Dojo</b> (boleh dikosongkan, otomatis memakai dojo yang dipilih di atas), <b>Wilayah</b>, <b>Tempat Lahir</b>, <b>Tanggal Lahir</b>, <b>Tingkat Sekarang</b>, <b>Tingkat Tujuan</b>. Format tanggal: 31-12-2010 (hari-bulan-tahun). Template Excel dari tombol di bawah sudah memakai pilihan (dropdown) untuk Dojo, Tingkat Sekarang, dan Tingkat Tujuan agar tidak salah ketik. Dojo harus sudah terdaftar di menu Administrator; Jika kolom Wilayah kosong, wilayah diisi dari data dojo; Pelatih selalu diisi otomatis dari data dojo. Baris yang kolom Dojo-nya berbeda dengan dojo yang dipilih di atas ditolak. Biaya ujian dan status pembayaran diatur per dojo di menu Administrator. Contoh: <i>Kyu 7 (Putih)</i> ke <i>Kyu 6 (Kuning)</i>.</p>
 <div class="row" style="margin-top:8px"><label class="row" style="margin:0"><input type="checkbox" id="append" style="width:auto"> Tambahkan ke data yang sudah ada (tanpa ini, data lama milik dojo yang dipilih diganti)</label></div>
 <div id="msg" role="status"></div>
+<div class="row" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)"><span class="hint" style="margin:0">Hanya satu atau dua peserta? Isi lewat formulir.</span><button id="addMan" type="button" style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Tambah Peserta Secara Manual</button></div>
 </section>
 
-<section class="card np">
-<h2 id="fTitle">Tambah peserta</h2>
-<p class="m e" id="noDojo" hidden>Belum ada dojo terdaftar. Admin perlu mendaftarkan dojo dulu (menu Administrator, perlu login) sebelum peserta bisa ditambahkan.</p>
-<div class="grid">
-<div><label for="fNama">Nama</label><input id="fNama"></div>
-<div><label for="fDojo">Dojo (terdaftar)</label><select id="fDojo"></select></div>
-<div><label for="fWil">Wilayah (terisi dari dojo, bisa diubah)</label><input id="fWil"></div>
-<div><label for="fPelatih">Nama pelatih (otomatis)</label><input id="fPelatih" readonly></div>
-<div><label for="fTmp">Tempat lahir</label><input id="fTmp"></div>
-<div><label for="fTgl">Tanggal lahir</label><input id="fTgl" type="date"></div>
-<div><label for="fDari">Tingkat sekarang</label><input id="fDari" list="tk"></div>
-<div><label for="fKe">Tingkat tujuan</label><input id="fKe" list="tk"></div>
-</div>
-<datalist id="tk"><option>Kyu 7 (Putih)<option>Kyu 6 (Kuning)<option>Kyu 5 (Oranye)<option>Kyu 4 (Hijau)<option>Kyu 3 (Biru)<option>Kyu 2 (Cokelat)<option>Kyu 1 (Cokelat)</datalist>
-<div class="row" style="margin-top:12px"><button class="p" id="save" type="button">Simpan peserta</button><button id="cancel" type="button" hidden>Batal edit</button></div>
-</section>
 
 
 
@@ -527,7 +529,7 @@ function renderKelola(){
 const gagalHapus=()=>alert("Data sudah hilang dari layar, tetapi database menolak penghapusan (admin belum punya izin hapus di tabel bkc_peserta). Jalankan SQL izin hapus di Supabase; penghapusan akan terkirim otomatis setelah itu.");
 $("qa").oninput=renderKelola;
 $("tba").onclick=async e=>{const t=e.target.dataset;if(!logged)return;
- if(t.e){$("tb").onclick({target:{dataset:{e:t.e}}});tab("Pes");$("fTitle").scrollIntoView({behavior:"smooth",block:"start"})}
+ if(t.e){$("tb").onclick({target:{dataset:{e:t.e}}});tab("Pes")}
  if(t.d&&confirm("Hapus peserta ini?")){data=data.filter(x=>x.id!==t.d);save();render();if(window.Cloud&&await Cloud.flush()===false)gagalHapus()}};
 $("clearAll").onclick=async()=>{if(!logged)return;
  if(!data.length){alert("Belum ada data peserta.");return}
@@ -684,15 +686,19 @@ function msg(t,err){const m=$("msg");m.textContent=t;m.className=err?"e":""}
 
 // form
 const F=["fNama","fDojo","fWil","fPelatih","fTmp","fTgl","fDari","fKe"];
-function resetForm(){F.forEach(i=>$(i).value="");editId=null;$("fTitle").textContent="Tambah peserta";$("cancel").hidden=true}
+function resetForm(){F.forEach(i=>$(i).value="");editId=null;$("fTitle").textContent="Tambah peserta";$("fMsg").textContent=""}
+function openForm(){$("fMsg").textContent="";$("fModal").hidden=false;$("fNama").focus()}
+function closeForm(){$("fModal").hidden=true}
+$("addMan").onclick=()=>{resetForm();openForm()};
 $("save").onclick=()=>{
- if(!$("fNama").value.trim()){$("fNama").focus();return}
- const dj=findDojo($("fDojo").value);if(!dj){$("fDojo").focus();return}
+ if(!$("fNama").value.trim()){$("fMsg").textContent="Nama peserta wajib diisi.";$("fNama").focus();return}
+ const dj=findDojo($("fDojo").value);if(!dj){$("fMsg").textContent=dojos.length?"Pilih dojo dulu.":"Belum ada dojo terdaftar.";$("fDojo").focus();return}
  const p={id:editId||Date.now()+Math.random().toString(36).slice(2,6),nama:$("fNama").value.trim(),dojo:dj.nama,wilayah:$("fWil").value.trim()||dj.wilayah,pelatih:dj.pelatih,tmp:$("fTmp").value.trim(),tgl:$("fTgl").value,dari:$("fDari").value.trim(),ke:$("fKe").value.trim()};
  if(editId)data=data.map(x=>x.id===editId?p:x);else data.push(p);
- save();resetForm();render();
+ const wasEdit=!!editId;save();resetForm();closeForm();render();
+ popup(wasEdit?"Perubahan tersimpan":"Peserta ditambahkan",[["Nama",p.nama],["Dojo",p.dojo]],wasEdit?"Data peserta sudah diperbarui.":"Peserta baru sudah masuk ke daftar.");
 };
-$("cancel").onclick=resetForm;
+$("cancel").onclick=()=>{resetForm();closeForm()};
 $("fDojo").onchange=()=>{const d=findDojo($("fDojo").value);$("fWil").value=d?d.wilayah:"";$("fPelatih").value=d?d.pelatih:""};
 // tabs
 function tab(v){["Pes","Doj","Adm","Set","Pro","Not","Up"].forEach(k=>{$("v"+k).hidden=k!==v;const b=$("t"+k);if(b)b.classList.toggle("on",k===v)});$("bell").classList.toggle("on",v==="Not");if(v==="Up")renderUp()}
@@ -745,11 +751,10 @@ $("ab").onclick=e=>{
 $("tb").onclick=e=>{
  const t=e.target.dataset;
  if(t.d&&logged&&confirm("Hapus peserta ini?")){data=data.filter(p=>p.id!==t.d);save();render()}
- if(t.e){const p=data.find(x=>x.id===t.e);editId=p.id;$("fNama").value=p.nama;$("fDojo").value=p.dojo;if($("fDojo").value!==p.dojo)$("fDojo").value="";$("fWil").value=p.wilayah||"";$("fPelatih").value=p.pelatih||"";$("fTmp").value=p.tmp||"";$("fTgl").value=/^\d{4}-\d{2}-\d{2}$/.test(p.tgl||"")?p.tgl:"";$("fDari").value=p.dari;$("fKe").value=p.ke;$("fTitle").textContent="Edit peserta";$("cancel").hidden=false;$("fNama").scrollIntoView({behavior:"smooth",block:"center"});$("fNama").focus()}
+ if(t.e){const p=data.find(x=>x.id===t.e);editId=p.id;$("fNama").value=p.nama;$("fDojo").value=p.dojo;if($("fDojo").value!==p.dojo)$("fDojo").value="";$("fWil").value=p.wilayah||"";$("fPelatih").value=p.pelatih||"";$("fTmp").value=p.tmp||"";$("fTgl").value=/^\d{4}-\d{2}-\d{2}$/.test(p.tgl||"")?p.tgl:"";$("fDari").value=p.dari;$("fKe").value=p.ke;$("fTitle").textContent="Edit peserta";$("cancel").hidden=false;openForm()}
 };
 $("q").oninput=render;
 $("tb").addEventListener("click",e=>{const t=e.target.dataset;
- if(t.e)$("fTitle").scrollIntoView({behavior:"smooth",block:"start"});
  if(t.r&&!logged){const q=data.find(x=>x.id===t.r);if(!q)return;
   if(window.Cloud&&!Cloud.reqReady()){alert("Fitur permintaan hapus belum aktif di database. Hubungi admin.");return}
   if(pendReq(q.id)){alert("Permintaan hapus untuk peserta ini sudah diajukan.");return}
