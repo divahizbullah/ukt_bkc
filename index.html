@@ -366,11 +366,24 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
+alter table bkc_upload add column if not exists dojo text generated always as (data-&gt;&gt;'dojo') stored;
+alter table bkc_upload add column if not exists pengupload text generated always as (data-&gt;&gt;'nama') stored;
+alter table bkc_upload add column if not exists nama_file text generated always as (data-&gt;&gt;'file') stored;
+alter table bkc_upload add column if not exists peserta_masuk integer generated always as ((data-&gt;&gt;'masuk')::integer) stored;
+alter table bkc_upload add column if not exists baris_ditolak integer generated always as ((data-&gt;&gt;'ditolak')::integer) stored;
+alter table bkc_upload add column if not exists status text generated always as (data-&gt;&gt;'status') stored;
 alter table bkc_upload enable row level security;
+drop policy if exists "upload_insert" on bkc_upload;
+drop policy if exists "upload_select" on bkc_upload;
+drop policy if exists "upload_update" on bkc_upload;
+drop policy if exists "upload_delete" on bkc_upload;
 create policy "upload_insert" on bkc_upload for insert to anon, authenticated with check (true);
 create policy "upload_select" on bkc_upload for select to authenticated using (true);
 create policy "upload_update" on bkc_upload for update to authenticated using (true) with check (true);
-create policy "upload_delete" on bkc_upload for delete to authenticated using (true);</pre></div>
+create policy "upload_delete" on bkc_upload for delete to authenticated using (true);
+grant insert on bkc_upload to anon;
+grant select, insert, update, delete on bkc_upload to authenticated;</pre>
+<span class="hint">SQL lengkap semua tabel (peserta, dojo, profil, dll.) ada di file <b>database.sql</b>.</span></div>
 <div class="stats" id="upStats"></div>
 <div class="row" style="margin-bottom:10px"><select id="upDojo" style="max-width:240px"></select><input id="upQ" placeholder="Cari pengupload / nama file" style="max-width:240px"></div>
 <p class="hint" id="upNote" style="margin:0 0 10px" hidden></p>
