@@ -169,6 +169,10 @@ body.anon .avw .dot{background:var(--mute)}
 .sqlbox pre{margin:8px 0 0;padding:10px;overflow:auto;background:var(--card);color:var(--ink);border-radius:8px;font-size:12px;user-select:all}
 #upB td.fn{max-width:220px;overflow:hidden;text-overflow:ellipsis}
 .pvt td,.pvt th{font-size:12px;padding:5px 8px}.pvt th{color:var(--ink);background:var(--bg);position:sticky;top:0}
+.ui{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--bg);cursor:pointer}
+.ui:hover{border-color:var(--mute)}.ui.sel{border-color:var(--red);box-shadow:0 0 0 1px var(--red)}
+.ui .ri{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ui .cnt{font-weight:800;font-size:13px}
 </style>
 </head>
 <body>
@@ -246,6 +250,11 @@ body.anon .avw .dot{background:var(--mute)}
 </section>
 </div>
 <div id="vDoj" hidden>
+<section class="card np" id="secUpList" hidden>
+<h2 style="margin-bottom:4px">Dojo yang sudah upload</h2>
+<p class="hint" style="margin:0 0 10px" id="ulInfo"></p>
+<div id="ulBody"></div>
+</section>
 <section class="card" id="secDet">
 <div class="kop pr"><h1 id="dtNama"></h1><p id="dtMeta"></p><p><b id="dtJudul"></b></p></div>
 <div class="np" style="margin-bottom:12px"><label for="dSel">Pilih dojo untuk melihat data peserta dan setorannya</label><select id="dSel" style="max-width:380px"></select></div>
@@ -623,7 +632,19 @@ function kwitansi(key){
  doPrint("pw");
 }
 let selDoj="";
+function renderUpList(){
+ const box=$("secUpList");box.hidden=!logged;if(!logged)return;
+ const g=new Map();
+ uploads.filter(u=>u.status!=="gagal").forEach(u=>{const k=String(u.dojo||"").toLowerCase(),o=g.get(k)||{nm:u.dojo,n:0,last:u};o.n++;if((u.tgl||"")>(o.last.tgl||""))o.last=u;g.set(k,o)});
+ const rows=[...g.entries()].sort((a,b)=>(b[1].last.tgl||"").localeCompare(a[1].last.tgl||""));
+ const belum=dojos.filter(d=>!g.has(d.nama.toLowerCase())).map(d=>d.nama);
+ $("ulInfo").textContent=rows.length+" dari "+dojos.length+" dojo terdaftar sudah upload. Klik dojo untuk membuka detail; daftar pilihan dojo di bawah tetap bisa dipakai untuk mencari dojo lain."+(belum.length?" Belum upload: "+belum.slice(0,12).join(", ")+(belum.length>12?" dan "+(belum.length-12)+" lainnya":"")+".":"");
+ $("ulBody").innerHTML=rows.length?rows.map(([k,o])=>{const d=findDojo(o.nm),c=data.filter(p=>(p.dojo||"").trim().toLowerCase()===k).length;
+  return `<div class="ui${selDoj===k?" sel":""}" data-k="${esc(k)}"><div><b>${esc(d?d.nama:o.nm)}</b><br><span class="hint">Pengupload terakhir: ${esc(o.last.nama)} | ${esc(fWaktu(o.last.tgl))} | ${o.n}x upload</span></div><div class="ri"><span class="cnt">${c} peserta</span>${d?`<span class="b ${d.status==="Lunas"?"l":"u"}">${d.status==="Lunas"?"Lunas":"Belum lunas"}</span>`:'<span class="b x">Belum terdaftar</span>'}<button class="s" type="button" data-k="${esc(k)}">Buka detail</button></div></div>`}).join(""):'<div class="empty">Belum ada dojo yang upload.</div>';
+}
+$("ulBody").onclick=e=>{const r=e.target.closest("[data-k]");if(!r||!logged)return;selDoj=r.dataset.k;renderDet();$("secDet").scrollIntoView({behavior:"smooth",block:"start"})};
 function renderDet(){
+ renderUpList();
  const names={};
  dojos.forEach(d=>names[d.nama.toLowerCase()]=d.nama);
  data.forEach(p=>{const n=(p.dojo||"").trim()||"(Tanpa dojo)";if(!names[n.toLowerCase()])names[n.toLowerCase()]=n});
