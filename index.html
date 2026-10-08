@@ -176,12 +176,13 @@ body.anon .avw .dot{background:var(--mute)}
 textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;resize:vertical}
 .bx{display:inline-block;width:16px;height:16px;border:1.5px solid var(--ink);border-radius:3px;vertical-align:middle}
 .nk{display:inline-block;padding:1px 9px;border-radius:99px;font-size:12px;font-weight:800}
-.nk.kb{background:var(--redbg);color:var(--red)}.nk.bk{background:var(--warnbg);color:var(--warn)}.nk.sb{background:var(--okbg);color:var(--ok)}
+.nk.gm{background:var(--okbg);color:var(--ok)}.nk.gb{background:rgba(37,99,235,.14);color:#2563eb}.nk.gcb{background:var(--warnbg);color:var(--warn)}.nk.gc{background:var(--redbg);color:var(--red)}
+.mgh{display:none}
 .mg{margin-bottom:22px}.mg h3{font-size:15px;margin:0}
-.mt{min-width:520px}.mt th.c,.mt td.c{text-align:center;width:70px}.mt td.wr{white-space:normal;min-width:220px}
+.mt{min-width:600px}.mt th.c,.mt td.c{text-align:center;width:70px}.mt td.wr{white-space:normal;min-width:220px}
 .mt tr.kt td{background:var(--bg);font-weight:700;font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
 .lgd{margin:0 0 14px;font-size:13px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
-@media print{.mg{break-inside:avoid;margin-bottom:18px}.mg+.mg{break-before:page}.nk{background:none!important;color:#000!important;padding:0}.bx{border-color:#000}.mt{min-width:0}.mt tr.kt td{background:#eee!important;color:#000}}
+@media print{.mg{break-inside:avoid;margin-bottom:18px}.mg+.mg{break-before:page}.nk{background:none!important;color:#000!important;padding:0}.bx{border-color:#000}.mt{min-width:0}.mt tr.kt td{background:#eee!important;color:#000}.mgh{display:block;text-align:center;font-weight:800;font-size:14px;border-bottom:3px double #000;padding-bottom:6px;margin-bottom:10px}.mgh span{display:block;font-weight:400;font-size:11px}#mtBody .mg:first-child .mgh,#gtBody .mg:first-child .mgh{display:none}}
 </style>
 </head>
 <body>
@@ -379,9 +380,9 @@ create policy "upload_delete" on bkc_upload for delete to authenticated using (t
 <p class="hint" style="margin:0 0 12px">Pilih sabuk, isi kategori, lalu tulis materinya. Boleh banyak sekaligus: satu materi per baris.</p>
 <div class="grid">
 <div><label for="mtSab">Sabuk / tingkat</label><input id="mtSab" list="tk" placeholder="mis. Kyu 6 (Kuning)"></div>
-<div><label for="mtKat">Kategori</label><input id="mtKat" list="mtk" placeholder="Kihon / Kata / Kumite"></div>
+<div><label for="mtKat">Kategori</label><input id="mtKat" list="mtk" placeholder="Penguatan Dasar / Kihon / Kata / Kumite"></div>
 </div>
-<datalist id="mtk"><option>Kihon<option>Kata<option>Kumite<option>Lainnya</datalist>
+<datalist id="mtk"><option>Penguatan Dasar<option>Kihon<option>Kata<option>Kumite<option>Lainnya</datalist>
 <div style="margin-top:10px"><label for="mtNm">Materi (satu per baris)</label><textarea id="mtNm" rows="4" placeholder="Contoh:&#10;Oi Zuki&#10;Gedan Barai"></textarea></div>
 <div class="row" style="margin-top:12px"><button class="p" id="mtAdd" type="button">Tambah materi</button></div>
 <div id="mtMsg" class="m" role="status"></div>
@@ -389,7 +390,7 @@ create policy "upload_delete" on bkc_upload for delete to authenticated using (t
 <section class="card" id="secMat">
 <div class="kop pr"><h1 id="mtNama"></h1><p id="mtMeta"></p><p><b>Lembar Materi dan Penilaian Ujian</b></p></div>
 <div class="row np" style="margin-bottom:12px"><h2 style="margin:0">Materi ujian per sabuk</h2><span class="sp"></span><select id="mtFil" style="max-width:220px" aria-label="Pilih sabuk"></select><button class="p" id="mtPrint" type="button">Cetak materi</button><button id="mtXls" type="button">Unduh Excel</button></div>
-<div class="lgd"><b>Keterangan nilai:</b><span><span class="nk kb">KB</span> Kurang Baik</span><span><span class="nk bk">Baik</span> Baik</span><span><span class="nk sb">SB</span> Sangat Baik</span></div>
+<div class="lgd"><b>Keterangan nilai:</b><span><span class="nk gm">M</span> Memuaskan</span><span><span class="nk gb">B</span> Baik</span><span><span class="nk gcb">CB</span> Cukup Baik</span><span><span class="nk gc">C</span> Cukup</span></div>
 <div id="mtBody"></div>
 <div class="pr sign"><div>Penguji<span>(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span></div><div>Panitia<span>(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span></div></div>
 </section></div>
@@ -397,8 +398,8 @@ create policy "upload_delete" on bkc_upload for delete to authenticated using (t
 <section class="card" id="secUjn">
 <div class="kop pr"><h1 id="gtNama"></h1><p id="gtMeta"></p><p><b>Materi Ujian</b></p></div>
 <div class="row np" style="margin-bottom:6px"><h2 style="margin:0">Materi ujian</h2><span class="sp"></span><select id="gtFil" style="max-width:220px" aria-label="Pilih sabuk"></select><button class="p" id="gtXls" type="button">Unduh materi (Excel)</button><button id="gtPrint" type="button">Cetak / simpan PDF</button></div>
-<p class="hint np" style="margin:0 0 12px">Pilih sabuk yang akan diujikan, lalu unduh untuk bahan latihan. Nilai ujian dibagi tiga: KB, Baik, dan SB.</p>
-<div class="lgd"><b>Keterangan nilai:</b><span><span class="nk kb">KB</span> Kurang Baik</span><span><span class="nk bk">Baik</span> Baik</span><span><span class="nk sb">SB</span> Sangat Baik</span></div>
+<p class="hint np" style="margin:0 0 12px">Pilih sabuk yang akan diujikan, lalu unduh untuk bahan latihan. Nilai ujian terdiri dari empat tingkat: M (Memuaskan), B (Baik), CB (Cukup Baik), dan C (Cukup).</p>
+<div class="lgd"><b>Keterangan nilai:</b><span><span class="nk gm">M</span> Memuaskan</span><span><span class="nk gb">B</span> Baik</span><span><span class="nk gcb">CB</span> Cukup Baik</span><span><span class="nk gc">C</span> Cukup</span></div>
 <div id="gtBody"></div>
 </section></div>
 <div id="vPro" hidden>
@@ -1028,8 +1029,8 @@ function drawMat(p,edit){
  const fil=$(p+"Fil"),v=fil.value,L=lvList(),opts=[...new Set(L.concat(matAll().map(m=>m.sabuk)))].sort((a,b)=>lvSort(a,b,L));
  fil.innerHTML='<option value="">Semua sabuk</option>'+opts.map(o=>`<option>${esc(o)}</option>`).join("");fil.value=opts.includes(v)?v:"";
  $(p+"Nama").textContent=info.nama||"Ujian Kenaikan Tingkat Karate";$(p+"Meta").textContent=$("pMeta").textContent;
- const gs=matGroups(fil.value),cs=edit?6:5;
- $(p+"Body").innerHTML=gs.length?gs.map(g=>{let n=0;return `<div class="mg"><div class="row" style="margin-bottom:8px"><h3>Materi Ujian ${esc(g.sabuk)}</h3><span class="sp"></span>${edit&&g.cats.length?`<button class="s np" data-mx="${esc(g.sabuk)}" type="button">Hapus semua materi sabuk ini</button>`:""}</div><div class="tw"><table class="mt"><thead><tr><th>No</th><th>Materi</th><th class="c"><span class="nk kb">KB</span></th><th class="c"><span class="nk bk">Baik</span></th><th class="c"><span class="nk sb">SB</span></th>${edit?'<th class="np">Aksi</th>':""}</tr></thead><tbody>${g.cats.length?g.cats.map(c=>`<tr class="kt"><td colspan="${cs}">${esc(c.kat)}</td></tr>`+c.items.map(m=>`<tr><td>${++n}</td><td class="wr">${esc(m.nama)}</td><td class="c"><i class="bx"></i></td><td class="c"><i class="bx"></i></td><td class="c"><i class="bx"></i></td>${edit?`<td class="np"><button class="s" data-me="${esc(m.id)}" type="button">Ubah</button> <button class="s" data-md="${esc(m.id)}" type="button">Hapus</button></td>`:""}</tr>`).join("")).join(""):`<tr><td colspan="${cs}" class="empty">Belum ada materi untuk sabuk ini.</td></tr>`}</tbody></table></div></div>`}).join(""):'<div class="empty">Belum ada materi ujian.</div>'}
+ const gs=matGroups(fil.value),cs=edit?7:6,mh=`<div class="mgh">${esc(info.nama||"Ujian Kenaikan Tingkat Karate")}<span>${esc($("pMeta").textContent)}</span></div>`;
+ $(p+"Body").innerHTML=gs.length?gs.map(g=>{let n=0;return `<div class="mg">${mh}<div class="row" style="margin-bottom:8px"><h3>Materi Ujian ${esc(g.sabuk)}</h3><span class="sp"></span>${edit&&g.cats.length?`<button class="s np" data-mx="${esc(g.sabuk)}" type="button">Hapus semua materi sabuk ini</button>`:""}</div><div class="tw"><table class="mt"><thead><tr><th>No</th><th>Materi</th><th class="c"><span class="nk gm">M</span></th><th class="c"><span class="nk gb">B</span></th><th class="c"><span class="nk gcb">CB</span></th><th class="c"><span class="nk gc">C</span></th>${edit?'<th class="np">Aksi</th>':""}</tr></thead><tbody>${g.cats.length?g.cats.map(c=>`<tr class="kt"><td colspan="${cs}">${esc(c.kat)}</td></tr>`+c.items.map(m=>`<tr><td>${++n}</td><td class="wr">${esc(m.nama)}</td><td class="c"><i class="bx"></i></td><td class="c"><i class="bx"></i></td><td class="c"><i class="bx"></i></td><td class="c"><i class="bx"></i></td>${edit?`<td class="np"><button class="s" data-me="${esc(m.id)}" type="button">Ubah</button> <button class="s" data-md="${esc(m.id)}" type="button">Hapus</button></td>`:""}</tr>`).join("")).join(""):`<tr><td colspan="${cs}" class="empty">Belum ada materi untuk sabuk ini.</td></tr>`}</tbody></table></div></div>`}).join(""):'<div class="empty">Belum ada materi ujian.</div>'}
 function renderMateri(){if(!$("vMat").hidden)drawMat("mt",true);if(!$("vUjn").hidden)drawMat("gt",false)}
 function mtMsg(t,e){$("mtMsg").textContent=t;$("mtMsg").className="m"+(e?" e":"")}
 $("mtAdd").onclick=()=>{if(!logged)return;
@@ -1050,12 +1051,12 @@ $("mtBody").onclick=e=>{const t=e.target.dataset;if(!logged)return;
 $("mtFil").onchange=renderMateri;$("gtFil").onchange=renderMateri;
 $("mtPrint").onclick=$("gtPrint").onclick=()=>window.print();
 async function dlMateri(fil){
- const rows=[["Sabuk","Kategori","No","Materi","KB (Kurang Baik)","Baik","SB (Sangat Baik)"]];
- matGroups(fil).forEach(g=>{let n=0;g.cats.forEach(c=>c.items.forEach(m=>rows.push([g.sabuk,c.kat,++n,m.nama,"","",""])))});
+ const rows=[["Sabuk","Kategori","No","Materi","M (Memuaskan)","B (Baik)","CB (Cukup Baik)","C (Cukup)"]];
+ matGroups(fil).forEach(g=>{let n=0;g.cats.forEach(c=>c.items.forEach(m=>rows.push([g.sabuk,c.kat,++n,m.nama,"","","",""])))});
  if(rows.length<2){alert("Belum ada materi untuk diunduh.");return}
  if(typeof XLSX==="undefined"){alert("Library Excel gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.");return}
  const dl=await getDl();if(!dl){alert("Unduhan tidak tersedia di tampilan ini.");return}
- const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=[{wch:22},{wch:14},{wch:5},{wch:40},{wch:18},{wch:8},{wch:18}];XLSX.utils.book_append_sheet(wb,ws,"Materi Ujian");
+ const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=[{wch:22},{wch:14},{wch:5},{wch:40},{wch:16},{wch:12},{wch:16},{wch:12}];XLSX.utils.book_append_sheet(wb,ws,"Materi Ujian");
  try{await dl.save({filename:"Materi_Ujian_BKC"+(fil?"_"+fil.replace(/[^A-Za-z0-9]+/g,"_").replace(/^_|_$/g,""):"")+".xlsx",data:XLSX.write(wb,{type:"array",bookType:"xlsx"})})}catch(e){if(!e||e.code!=="declined")alert("File gagal disimpan.")}}
 $("mtXls").onclick=()=>dlMateri($("mtFil").value);$("gtXls").onclick=()=>dlMateri($("gtFil").value);
 
