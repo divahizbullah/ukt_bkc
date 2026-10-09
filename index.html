@@ -240,6 +240,10 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 <div id="fMsg" class="m e" role="alert"></div>
 <div class="row" style="margin-top:12px"><button class="p" id="save" type="button">Simpan peserta</button><button id="cancel" type="button">Batal</button></div>
 </div></div>
+<div id="dojoModal" class="ov np" hidden><div class="mdl wide" style="max-width:1020px" role="dialog" aria-modal="true" aria-labelledby="dmT">
+<div class="row" style="margin-bottom:10px"><h2 id="dmT" style="margin:0">Dojo terdaftar</h2><span class="sp"></span><select id="dmW" style="max-width:200px" aria-label="Filter wilayah"></select><input id="dmQ" placeholder="Cari dojo / pelatih" style="max-width:200px"><button class="s" id="dmClose" type="button">Tutup</button></div>
+<div class="tw" style="max-height:65vh"><table><thead><tr><th>No</th><th>Dojo</th><th>Wilayah</th><th>Pelatih</th><th>Kontak</th><th class="n">Peserta</th><th class="n">Biaya ujian</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="ab"></tbody></table></div>
+</div></div>
 <div id="popup" class="ov np" hidden><div class="mdl" role="dialog" aria-modal="true" aria-labelledby="pTitle"><div class="pic" id="pIc"></div><h2 id="pTitle"></h2><div id="pBody"></div><button class="p" id="pOk" type="button">OK</button></div></div>
 <div id="pv" class="ov np" hidden><div class="mdl wide" role="dialog" aria-modal="true" aria-labelledby="pvTitle"><div class="row"><h2 id="pvTitle" style="margin:0;font-size:15px"></h2><span class="sp"></span><button class="s" id="pvClose" type="button">Tutup</button></div><div id="pvBody" class="tw" style="margin-top:10px;max-height:65vh"></div></div></div>
 <div id="cloudBar" class="np"><span id="cloudBadge" data-s="busy">Menghubungkan ke database…</span></div>
@@ -380,8 +384,8 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 <div class="row" style="margin-top:12px"><button class="p" id="aSave" type="button">Daftarkan dojo</button><button id="aCancel" type="button" hidden>Batal edit</button></div>
 <div id="aMsg" class="m" role="status"></div>
 </section>
-<section class="card np"><h2>Dojo terdaftar</h2>
-<div class="tw"><table><thead><tr><th>No</th><th>Dojo</th><th>Wilayah</th><th>Pelatih</th><th>Kontak</th><th class="n">Peserta</th><th class="n">Biaya ujian</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="ab"></tbody></table></div>
+<section class="card np"><div class="row"><h2 style="margin:0">Dojo terdaftar</h2><span class="sp"></span><button class="p" id="dojoOpen" type="button">Lihat daftar dojo</button></div>
+<p class="hint" id="dojoSum" style="margin:8px 0 0"></p>
 </section>
 <section class="card np" id="secKelola">
 <div class="row" style="margin-bottom:8px"><h2 style="margin:0">Kelola peserta</h2><span class="sp"></span><select id="qaDojo" style="max-width:250px" aria-label="Pilih dojo"></select><input id="qa" placeholder="Cari nama / dojo" style="max-width:200px"></div>
@@ -754,9 +758,20 @@ function render(){
 }
 function refreshSel(){const v=$("fDojo").value;$("fDojo").innerHTML='<option value="">Pilih dojo</option>'+dojos.map(d=>`<option>${esc(d.nama)}</option>`).join("");$("fDojo").value=v;$("noDojo").hidden=dojos.length>0;const u=$("uDojo"),uv=u.value;u.innerHTML='<option value="">Pilih dojo</option>'+dojos.map(d=>`<option>${esc(d.nama)}</option>`).join("");u.value=uv}
 function renderAdm(){
- $("ab").innerHTML=dojos.length?dojos.map((d,i)=>{const n=data.filter(p=>(p.dojo||"").toLowerCase()===d.nama.toLowerCase()).length;return `<tr><td>${i+1}</td><td>${esc(d.nama)}</td><td>${esc(d.wilayah)}</td><td>${esc(d.pelatih)}</td><td>${esc(d.telp)}</td><td class="n">${n}</td><td class="n">${rp(d.ujian)}</td><td>${d.status==="Lunas"?"Lunas":"Belum"}</td><td><button class="s" data-de="${d.id}">Edit</button> <button class="s" data-dd="${d.id}">Hapus</button></td></tr>`}).join(""):`<tr><td colspan="9" class="empty">Belum ada dojo terdaftar. Isi form di atas untuk mendaftarkan dojo pertama.</td></tr>`;
+ const wl=[...new Set(dojos.map(d=>(d.wilayah||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b)),ws=$("dmW"),wv=ws.value;
+ ws.innerHTML='<option value="">Semua wilayah</option>'+wl.map(w=>`<option>${esc(w)}</option>`).join("");ws.value=wl.includes(wv)?wv:"";
+ const q=$("dmQ").value.toLowerCase(),cnt={};data.forEach(p=>{const k=(p.dojo||"").toLowerCase();cnt[k]=(cnt[k]||0)+1});
+ const l=dojos.filter(d=>(!ws.value||(d.wilayah||"").trim()===ws.value)&&(!q||(d.nama+" "+(d.pelatih||"")+" "+(d.wilayah||"")).toLowerCase().includes(q)));
+ $("ab").innerHTML=l.length?l.map((d,i)=>{const n=cnt[d.nama.toLowerCase()]||0;return `<tr><td>${i+1}</td><td>${esc(d.nama)}</td><td>${esc(d.wilayah)}</td><td>${esc(d.pelatih)}</td><td>${esc(d.telp)}</td><td class="n">${n}</td><td class="n">${rp(d.ujian)}</td><td>${d.status==="Lunas"?"Lunas":"Belum"}</td><td><button class="s" data-de="${d.id}">Edit</button> <button class="s" data-dd="${d.id}">Hapus</button></td></tr>`}).join(""):`<tr><td colspan="9" class="empty">${dojos.length?"Tidak ada dojo yang cocok.":"Belum ada dojo terdaftar. Tutup jendela ini lalu isi form pendaftaran."}</td></tr>`;
+ $("dmT").textContent="Dojo terdaftar ("+dojos.length+")";$("dojoOpen").textContent="Lihat daftar dojo ("+dojos.length+")";
+ const lns=dojos.filter(d=>d.status==="Lunas").length;
+ $("dojoSum").textContent=dojos.length?dojos.length+" dojo di "+wl.length+" wilayah | Lunas "+lns+", belum "+(dojos.length-lns)+" | "+data.length+" peserta. Klik tombol di kanan untuk melihat, mencari, mengedit, atau menghapus dojo.":"Belum ada dojo terdaftar. Isi form di atas untuk mendaftarkan dojo pertama.";
  refreshSel();
 }
+$("dojoOpen").onclick=()=>{$("dmQ").value="";renderAdm();$("dojoModal").hidden=false;$("dmQ").focus()};
+$("dmClose").onclick=()=>{$("dojoModal").hidden=true};
+$("dojoModal").addEventListener("click",e=>{if(e.target===$("dojoModal"))$("dojoModal").hidden=true});
+$("dmW").onchange=renderAdm;$("dmQ").oninput=renderAdm;
 const fmtTgl=t=>t?new Date(t).toLocaleDateString("id-ID",{day:"numeric",month:"short",year:"numeric"}):"";
 function renderSet(){
  const tarif=+info.tarif||0,g={};
@@ -915,7 +930,7 @@ $("aSave").onclick=()=>{
 };
 $("ab").onclick=e=>{
  const t=e.target.dataset;
- if(t.de){const d=dojos.find(x=>x.id===t.de);editDojo=d.id;$("aNama").value=d.nama;$("aWil").value=d.wilayah;$("aPel").value=d.pelatih;$("aTelp").value=d.telp||"";$("aEmail").value=d.email||"";$("aUjian").value=d.ujian||"";$("aStat").value=d.status||"Belum";$("aTitle").textContent="Edit dojo";$("aSave").textContent="Simpan perubahan";$("aCancel").hidden=false;$("aNama").focus()}
+ if(t.de){const d=dojos.find(x=>x.id===t.de);$("dojoModal").hidden=true;editDojo=d.id;$("aNama").value=d.nama;$("aWil").value=d.wilayah;$("aPel").value=d.pelatih;$("aTelp").value=d.telp||"";$("aEmail").value=d.email||"";$("aUjian").value=d.ujian||"";$("aStat").value=d.status||"Belum";$("aTitle").textContent="Edit dojo";$("aSave").textContent="Simpan perubahan";$("aCancel").hidden=false;$("aNama").scrollIntoView({behavior:"smooth",block:"center"});$("aNama").focus()}
  if(t.dd){const d=dojos.find(x=>x.id===t.dd),n=data.filter(p=>(p.dojo||"").toLowerCase()===d.nama.toLowerCase()).length;
   if(n){alert("Dojo "+d.nama+" masih memiliki "+n+" peserta. Hapus pesertanya terlebih dahulu.");return}
   if(confirm("Hapus dojo "+d.nama+"?")){dojos=dojos.filter(x=>x.id!==d.id);save();render()}}
@@ -1050,7 +1065,7 @@ $("pOk").onclick=()=>{$("popup").hidden=true;if(scrollNew){scrollNew=false;$("se
 $("popup").addEventListener("click",e=>{if(e.target===$("popup"))$("popup").hidden=true});
 $("pvClose").onclick=()=>{$("pv").hidden=true};
 $("pv").addEventListener("click",e=>{if(e.target===$("pv"))$("pv").hidden=true});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("popup").hidden=true;$("pv").hidden=true}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){$("popup").hidden=true;$("pv").hidden=true;$("dojoModal").hidden=true}});
 try{$("uNama").value=localStorage.getItem("karate_upnama")||""}catch(e){}
 
 // ===== Import peserta dari Excel =====
