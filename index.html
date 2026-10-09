@@ -183,6 +183,8 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 .mt tr.kt td{background:var(--bg);font-weight:700;font-size:12px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
 .lgd{margin:0 0 14px;font-size:13px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
 @media print{.mg{break-inside:avoid;margin-bottom:18px}.mg+.mg{break-before:page}.nk{background:none!important;color:#000!important;padding:0}.bx{border-color:#000}.mt{min-width:0}.mt tr.kt td{background:#eee!important;color:#000}.mgh{display:block;text-align:center;font-weight:800;font-size:14px;border-bottom:3px double #000;padding-bottom:6px;margin-bottom:10px}.mgh span{display:block;font-weight:400;font-size:11px}#mtBody .mg:first-child .mgh,#gtBody .mg:first-child .mgh{display:none}}
+.ck{width:16px;height:16px;padding:0;margin:0;vertical-align:middle;cursor:pointer;accent-color:var(--red)}
+.bg2{margin-left:6px}
 </style>
 <style>
 @page ba{size:A4 portrait;margin:16mm}
@@ -379,9 +381,16 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 <div class="tw"><table><thead><tr><th>No</th><th>Dojo</th><th>Wilayah</th><th>Pelatih</th><th>Kontak</th><th class="n">Peserta</th><th class="n">Biaya ujian</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="ab"></tbody></table></div>
 </section>
 <section class="card np" id="secKelola">
-<div class="row" style="margin-bottom:8px"><h2 style="margin:0">Kelola peserta</h2><span class="sp"></span><input id="qa" placeholder="Cari nama / dojo" style="max-width:200px"><button id="clearAll" type="button" style="color:var(--red);border-color:var(--red)">Hapus semua</button></div>
-<p class="hint" style="margin:0 0 10px">Khusus admin. Edit membuka form di menu Peserta. Hapus semua menghapus seluruh data peserta dan tidak bisa dibatalkan.</p>
-<div class="tw"><table><thead><tr><th>No</th><th>Nama</th><th>Dojo</th><th>Wilayah</th><th>Tempat, tanggal lahir</th><th>Tingkat tujuan</th><th>Aksi</th></tr></thead><tbody id="tba"></tbody><tfoot id="tfa"></tfoot></table></div>
+<div class="row" style="margin-bottom:8px"><h2 style="margin:0">Kelola peserta</h2><span class="sp"></span><select id="qaDojo" style="max-width:250px" aria-label="Pilih dojo"></select><input id="qa" placeholder="Cari nama / dojo" style="max-width:200px"></div>
+<p class="hint" style="margin:0 0 10px">Khusus admin. Pilih dojo untuk mengelola peserta satu dojo saja. Edit membuka form di menu Peserta. Penghapusan tidak bisa dibatalkan, sebaiknya unduh backup dulu.</p>
+<div class="row" style="margin-bottom:8px">
+<button id="delSel" type="button" disabled>Hapus yang dipilih (0)</button>
+<button id="delDojo" type="button" disabled style="color:var(--red);border-color:var(--red)">Hapus semua peserta dojo ini</button>
+<button id="dedup" type="button">Bersihkan data ganda</button>
+<span class="sp"></span>
+<button id="clearAll" type="button" style="color:var(--red);border-color:var(--red)">Hapus data keseluruhan</button></div>
+<div class="hint" id="qaDup" style="margin:0 0 10px"></div>
+<div class="tw"><table><thead><tr><th><input type="checkbox" class="ck" id="qaAll" aria-label="Pilih semua yang tampil"></th><th>No</th><th>Nama</th><th>Dojo</th><th>Wilayah</th><th>Tempat, tanggal lahir</th><th>Tingkat tujuan</th><th>Aksi</th></tr></thead><tbody id="tba"></tbody><tfoot id="tfa"></tfoot></table></div>
 </section>
 </div>
 <div id="vNot" hidden>
@@ -613,13 +622,45 @@ function renderNot(){
  $("nHist").innerHTML=h.length?h.map(r=>`<tr><td>${esc(fWaktu(r.tglKeputusan||r.tgl))}</td><td>${esc(r.nama)}</td><td>${esc(r.dojo)}</td><td><span class="b ${r.status==="disetujui"?"l":"u"}">${r.status==="disetujui"?"Disetujui":"Ditolak"}</span></td></tr>`).join(""):'<tr><td colspan="4" class="empty">Belum ada riwayat.</td></tr>';
 }
 // ===== Kelola peserta (admin) =====
+function normN(x){return String(x||"").toLowerCase().replace(/[^\p{L}\p{N} ]/gu," ").replace(/\s+/g," ").trim()}
+// cek data sama: nama (dinormalisasi) sama di satu dojo, dan tanggal lahir sama atau salah satunya kosong
+function dupCheck(seen,p,ex){const k=normN(p.nama),l=seen.get(k)||[],h=l.find(x=>!x.tgl||!p.tgl||x.tgl===p.tgl);if(h)return h.ex?"ada":"file";l.push({tgl:p.tgl,ex});seen.set(k,l);return ""}
+function dupIds(dk){const seen=new Map(),ids=new Set();
+ data.forEach(p=>{const d=(p.dojo||"").trim().toLowerCase();if(dk&&d!==dk)return;const k=d+"|"+normN(p.nama),l=seen.get(k)||[];
+  if(l.some(x=>!x||!p.tgl||x===p.tgl)){ids.add(String(p.id));return}l.push(p.tgl);seen.set(k,l)});return ids}
+const selK=new Set();let kelolaVis=[];
 function renderKelola(){
- const k=$("qa").value.toLowerCase(),l=data.filter(p=>!k||(p.nama+" "+p.dojo).toLowerCase().includes(k));
- $("tba").innerHTML=l.length?l.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nama)}</td><td>${esc(p.dojo)}</td><td>${esc(p.wilayah)}</td><td>${esc(ttl(p))}</td><td>${esc(p.ke)}</td><td><button class="s" data-e="${p.id}">Edit</button> <button class="s" data-d="${p.id}">Hapus</button></td></tr>`).join(""):`<tr><td colspan="7" class="empty">${data.length?"Tidak ada peserta yang cocok.":"Belum ada peserta."}</td></tr>`;
- $("tfa").innerHTML=`<tr><td colspan="7">Total (${l.length} peserta)</td></tr>`;
+ const sel=$("qaDojo"),sv=sel.value,cnt={};data.forEach(p=>{const n=(p.dojo||"").trim();if(n)cnt[n]=(cnt[n]||0)+1});
+ const names=[...new Set(dojos.map(d=>d.nama).concat(Object.keys(cnt)))].sort((a,b)=>String(a).localeCompare(String(b)));
+ sel.innerHTML='<option value="">Semua dojo ('+data.length+')</option>'+names.map(n=>`<option value="${esc(n)}">${esc(n)} (${cnt[n]||0})</option>`).join("");sel.value=names.includes(sv)?sv:"";
+ const dk=sel.value.trim().toLowerCase(),k=$("qa").value.toLowerCase(),
+  l=data.filter(p=>(!dk||(p.dojo||"").trim().toLowerCase()===dk)&&(!k||(p.nama+" "+p.dojo).toLowerCase().includes(k))),
+  dup=dupIds(dk),have=new Set(data.map(p=>String(p.id)));
+ [...selK].forEach(id=>{if(!have.has(id))selK.delete(id)});
+ kelolaVis=l.map(p=>String(p.id));
+ $("tba").innerHTML=l.length?l.map((p,i)=>`<tr><td><input type="checkbox" class="ck" data-s="${esc(String(p.id))}" ${selK.has(String(p.id))?"checked":""} aria-label="Pilih ${esc(p.nama)}"></td><td>${i+1}</td><td>${esc(p.nama)}${dup.has(String(p.id))?'<span class="b u bg2">Ganda</span>':""}</td><td>${esc(p.dojo)}</td><td>${esc(p.wilayah)}</td><td>${esc(ttl(p))}</td><td>${esc(p.ke)}</td><td><button class="s" data-e="${p.id}">Edit</button> <button class="s" data-d="${p.id}">Hapus</button></td></tr>`).join(""):`<tr><td colspan="8" class="empty">${data.length?"Tidak ada peserta yang cocok.":"Belum ada peserta."}</td></tr>`;
+ $("tfa").innerHTML=`<tr><td colspan="8">Total (${l.length} peserta${dk?" di dojo ini":""})</td></tr>`;
+ $("qaAll").checked=l.length>0&&kelolaVis.every(id=>selK.has(id));
+ $("delSel").textContent="Hapus yang dipilih ("+selK.size+")";$("delSel").disabled=!selK.size;
+ const dn=sel.value;$("delDojo").disabled=!dn;$("delDojo").textContent=dn?"Hapus semua peserta dojo ini ("+(cnt[dn]||0)+")":"Hapus semua peserta dojo ini";
+ $("qaDup").textContent=dup.size?"Terdeteksi "+dup.size+" data ganda"+(dn?" di dojo "+dn:"")+" (nama sama, tanggal lahir sama atau kosong). Ditandai \"Ganda\". Klik Bersihkan data ganda untuk menghapusnya; data yang paling awal dipertahankan.":"Tidak ada data ganda"+(dn?" di dojo ini":"")+".";
 }
 const gagalHapus=()=>alert("Data sudah hilang dari layar, tetapi database menolak penghapusan (admin belum punya izin hapus di tabel bkc_peserta). Jalankan SQL izin hapus di Supabase; penghapusan akan terkirim otomatis setelah itu.");
-$("qa").oninput=renderKelola;
+$("qa").oninput=renderKelola;$("qaDojo").onchange=renderKelola;
+async function afterDel(){save();render();if(window.Cloud&&await Cloud.flush()===false)gagalHapus()}
+$("tba").onchange=e=>{const id=e.target.dataset.s;if(!id||!logged)return;e.target.checked?selK.add(id):selK.delete(id);renderKelola()};
+$("qaAll").onchange=e=>{if(!logged)return;kelolaVis.forEach(id=>e.target.checked?selK.add(id):selK.delete(id));renderKelola()};
+$("delSel").onclick=async()=>{if(!logged||!selK.size)return;
+ if(!confirm("Hapus "+selK.size+" peserta yang dipilih? Tindakan ini tidak bisa dibatalkan."))return;
+ data=data.filter(p=>!selK.has(String(p.id)));selK.clear();await afterDel()};
+$("delDojo").onclick=async()=>{if(!logged)return;const dn=$("qaDojo").value;if(!dn)return;const k0=dn.trim().toLowerCase(),n=data.filter(p=>(p.dojo||"").trim().toLowerCase()===k0).length;
+ if(!n){alert("Dojo ini belum punya peserta.");return}
+ if(!confirm("Hapus SEMUA "+n+" peserta dojo \""+dn+"\"? Peserta dojo lain tidak ikut terhapus. Tindakan ini tidak bisa dibatalkan."))return;
+ data=data.filter(p=>(p.dojo||"").trim().toLowerCase()!==k0);await afterDel()};
+$("dedup").onclick=async()=>{if(!logged)return;const dn=$("qaDojo").value,ids=dupIds(dn.trim().toLowerCase());
+ if(!ids.size){alert("Tidak ada data ganda"+(dn?" di dojo "+dn:"")+".");return}
+ if(!confirm("Hapus "+ids.size+" data ganda"+(dn?" di dojo "+dn:" di semua dojo")+"? Data yang paling awal dipertahankan. Tindakan ini tidak bisa dibatalkan."))return;
+ data=data.filter(p=>!ids.has(String(p.id)));await afterDel()};
 $("tba").onclick=async e=>{const t=e.target.dataset;if(!logged)return;
  if(t.e){$("tb").onclick({target:{dataset:{e:t.e}}});tab("Pes")}
  if(t.d&&confirm("Hapus peserta ini?")){data=data.filter(x=>x.id!==t.d);save();render();if(window.Cloud&&await Cloud.flush()===false)gagalHapus()}};
@@ -793,6 +834,8 @@ $("save").onclick=()=>{
  if(!$("fNama").value.trim()){$("fMsg").textContent="Nama peserta wajib diisi.";$("fNama").focus();return}
  const dj=findDojo($("fDojo").value);if(!dj){$("fMsg").textContent=dojos.length?"Pilih dojo dulu.":"Belum ada dojo terdaftar.";$("fDojo").focus();return}
  const p={id:editId||Date.now()+Math.random().toString(36).slice(2,6),nama:$("fNama").value.trim(),dojo:dj.nama,wilayah:$("fWil").value.trim()||dj.wilayah,pelatih:dj.pelatih,tmp:$("fTmp").value.trim(),tgl:$("fTgl").value,dari:$("fDari").value.trim(),ke:$("fKe").value.trim()};
+ if(!editId){const k0=dj.nama.toLowerCase(),seen=new Map();data.forEach(x=>{if((x.dojo||"").trim().toLowerCase()===k0)dupCheck(seen,x,true)});
+  if(dupCheck(seen,p,false)){$("fMsg").textContent="Peserta dengan nama yang sama sudah ada di dojo ini. Cek daftar peserta dulu agar tidak dobel. Jika memang orang yang berbeda, isi tanggal lahir keduanya.";return}}
  if(editId)data=data.map(x=>x.id===editId?p:x);else data.push(p);
  const wasEdit=!!editId;save();resetForm();closeForm();render();
  popup(wasEdit?"Perubahan tersimpan":"Peserta ditambahkan",[["Nama",p.nama],["Dojo",p.dojo]],wasEdit?"Data peserta sudah diperbarui.":"Peserta baru sudah masuk ke daftar.");
@@ -1007,22 +1050,27 @@ function importFile(f){
     if(dn&&dn.toLowerCase()!==dj0.nama.toLowerCase()){nb++;bad.add(dn);return}
     out.push({id:Date.now()+Math.random().toString(36).slice(2,8),nama:String(m.nama).trim(),dojo:dj0.nama,wilayah:String(m.wilayah||"").trim()||dj0.wilayah,pelatih:dj0.pelatih,tmp:tmp,tgl:tgl,dari:String(m.dari||"").trim(),ke:String(m.ke||"").trim()});
    });
-   const add=$("append").checked,ok=out.length>0,upId=Date.now()+Math.random().toString(36).slice(2,8),upTgl=new Date().toISOString();
+   const add=$("append").checked,seen=new Map();let dEx=0,dFile=0;
+   if(add){const k0=dj0.nama.toLowerCase();data.forEach(p=>{if((p.dojo||"").trim().toLowerCase()===k0)dupCheck(seen,p,true)})}
+   out.splice(0,out.length,...out.filter(p=>{const r=dupCheck(seen,p,false);if(r==="ada")dEx++;else if(r==="file")dFile++;return !r}));
+   const dobel=dEx+dFile,ok=out.length>0,allDup=!ok&&dobel>0,upId=Date.now()+Math.random().toString(36).slice(2,8),upTgl=new Date().toISOString();
     out.forEach(p=>{p.upId=upId;p.upNama=meta.nama;p.upFile=f.name;p.upTgl=upTgl});
-   uploads.push({id:upId,tgl:upTgl,dojo:dj0.nama,nama:meta.nama,file:f.name,ukuran:f.size,masuk:out.length,ditolak:nb,mode:add?"tambah":"ganti",status:ok?"berhasil":"gagal",fileData:f.size<=1048576?b64(buf):""});
+   uploads.push({id:upId,tgl:upTgl,dojo:dj0.nama,nama:meta.nama,file:f.name,ukuran:f.size,masuk:out.length,ditolak:nb,mode:add?"tambah":"ganti",status:ok?"berhasil":allDup?"duplikat":"gagal",dobel:dobel,fileData:f.size<=1048576?b64(buf):""});
    try{localStorage.setItem("karate_upnama",meta.nama)}catch(x){}
    if(ok){const kk=dj0.nama.toLowerCase();data=add?data.concat(out):data.filter(p=>(p.dojo||"").toLowerCase()!==kk).concat(out)}
    save();render();
    const badTxt=[...bad].slice(0,5).join(", ");
    if(ok){const lu=lastUp={dojo:dj0.nama,nama:meta.nama,file:f.name,tgl:new Date().toISOString(),rows:out.map(p=>({...p})),nb,st:"busy"};scrollNew=true;renderBaru();
     if(window.Cloud)Cloud.flush().then(r=>{lu.st=r===true?"ok":r===false?"wait":"local";renderBaru()},()=>{lu.st="wait";renderBaru()});else{lu.st="local";renderBaru()}}
+   if(allDup){const t="Tidak ada data baru: semua "+dobel+" peserta di file ini sudah ada"+(dEx?" di dojo "+dj0.nama:"")+", jadi tidak dimasukkan lagi.";
+    msg(t,0);popup("Data sudah ada",[["Nama dojo",dj0.nama],["Pengupload",meta.nama],["File",f.name],["Peserta baru","0"],["Dilewati (data sama)",String(dobel)]],"Semua peserta di file ini sudah pernah masuk, jadi tidak ditambahkan lagi. Cek daftar peserta untuk memastikan.",false);return}
    if(!ok){
     const t=nb?"Import dibatalkan: kolom Dojo di file ("+badTxt+") berbeda dengan dojo yang dipilih ("+dj0.nama+").":"Tidak ada baris peserta terbaca. Pastikan baris pertama berisi judul kolom dan ada kolom Nama.";
     msg(t,1);popup("Import gagal",[["Dojo",dj0.nama],["Pengupload",meta.nama],["File",f.name]],t,true);return}
    const t=out.length+" peserta dari "+f.name+" berhasil diimport ke dojo "+dj0.nama+"."+(nb?" "+nb+" baris ditolak karena kolom Dojo berbeda dari dojo yang dipilih: "+badTxt+".":"");
-   msg(t,nb>0);
-   popup("Upload selesai",[["Nama dojo",dj0.nama],["Pengupload",meta.nama],["File",f.name],["Peserta masuk",String(out.length)]].concat(nb?[["Baris ditolak",String(nb)]]:[]).concat([["Mode",add?"Ditambahkan ke data lama":"Menggantikan data lama dojo ini"]]),
-    nb?"Baris ditolak karena kolom Dojo di file berbeda dengan dojo yang dipilih: "+badTxt+".":"Data peserta sudah masuk. Daftar yang baru Anda upload ditampilkan di halaman ini untuk Anda periksa.",false);
+   msg(t+(dobel?" "+dobel+" baris dilewati karena datanya sama dengan yang sudah ada.":""),nb>0);
+   popup("Upload selesai",[["Nama dojo",dj0.nama],["Pengupload",meta.nama],["File",f.name],["Peserta masuk",String(out.length)]].concat(nb?[["Baris ditolak",String(nb)]]:[]).concat(dobel?[["Dilewati (data sama)",String(dobel)]]:[]).concat([["Mode",add?"Ditambahkan ke data lama":"Menggantikan data lama dojo ini"]]),
+    nb?"Baris ditolak karena kolom Dojo di file berbeda dengan dojo yang dipilih: "+badTxt+".":(dobel?dobel+" peserta dilewati karena datanya sudah ada, jadi tidak dobel. ":"")+"Data peserta sudah masuk. Daftar yang baru Anda upload ditampilkan di halaman ini untuk Anda periksa.",false);
   }catch(err){const t="File tidak bisa dibaca. Gunakan format .xlsx, .xls, atau .csv.";msg(t,1);popup("Import gagal",[],t,true)}
  };
  r.readAsArrayBuffer(f);
@@ -1162,7 +1210,7 @@ function renderUp(){
  const q=$("upQ").value.toLowerCase(),l=list.filter(u=>(!sel.value||u.dojo===sel.value)&&(!q||((u.nama||"")+" "+(u.file||"")+" "+(u.dojo||"")).toLowerCase().includes(q)));
  const okN=list.filter(u=>u.status!=="gagal");
  $("upStats").innerHTML=`<div class="stat r"><small>Total upload</small><b>${list.length}</b></div><div class="stat g"><small>Peserta masuk</small><b>${okN.reduce((s,u)=>s+(+u.masuk||0),0)}</b></div><div class="stat"><small>Dojo yang mengupload</small><b>${names.length}</b></div><div class="stat y"><small>Upload gagal</small><b>${list.length-okN.length}</b></div>`;
- $("upB").innerHTML=l.length?l.map((u,i)=>`<tr><td>${i+1}</td><td>${u.tgl?esc(fWaktu(u.tgl)):'<span class="hint">Tidak tercatat</span>'}</td><td>${esc(u.dojo)}</td><td>${u.nama?esc(u.nama):'<span class="hint">(tidak tercatat)</span>'}</td><td class="fn" title="${esc(u.file)}">${u.virtual?`${u.file?esc(u.file)+"<br>":""}<span class="hint">${u.virtual==="peserta"?"Dibangun dari data peserta. File asli tidak diarsipkan.":"Sudah ada di rekapan sebelum arsip aktif."}</span>`:`${esc(u.file)}<br><span class="hint">${esc(fSize(u.ukuran))} | ${u.mode==="tambah"?"ditambahkan":"mengganti"}</span>`}</td><td class="n">${+u.masuk||0}</td><td class="n">${+u.ditolak||0}</td><td>${u.virtual?'<span class="b u">Dari '+(u.virtual==="peserta"?"data peserta":"rekapan")+'</span>':`<span class="b ${u.status==="gagal"?"x":"l"}">${u.status==="gagal"?"Gagal":"Berhasil"}</span>`}</td><td>${u.virtual?'<span class="hint">Tidak ada arsip file</span>':`<button class="s" data-uv="${esc(u.id)}">Lihat</button> <button class="s" data-ud="${esc(u.id)}">Unduh</button> <button class="s" data-ux="${esc(u.id)}">Hapus</button>`}</td></tr>`).join(""):`<tr><td colspan="9" class="empty">${list.length?"Tidak ada upload yang cocok.":"Belum ada file yang diupload."}</td></tr>`;
+ $("upB").innerHTML=l.length?l.map((u,i)=>`<tr><td>${i+1}</td><td>${u.tgl?esc(fWaktu(u.tgl)):'<span class="hint">Tidak tercatat</span>'}</td><td>${esc(u.dojo)}</td><td>${u.nama?esc(u.nama):'<span class="hint">(tidak tercatat)</span>'}</td><td class="fn" title="${esc(u.file)}">${u.virtual?`${u.file?esc(u.file)+"<br>":""}<span class="hint">${u.virtual==="peserta"?"Dibangun dari data peserta. File asli tidak diarsipkan.":"Sudah ada di rekapan sebelum arsip aktif."}</span>`:`${esc(u.file)}<br><span class="hint">${esc(fSize(u.ukuran))} | ${u.mode==="tambah"?"ditambahkan":"mengganti"}</span>`}</td><td class="n">${+u.masuk||0}</td><td class="n">${+u.ditolak||0}</td><td>${u.virtual?'<span class="b u">Dari '+(u.virtual==="peserta"?"data peserta":"rekapan")+'</span>':`<span class="b ${u.status==="gagal"?"x":u.status==="duplikat"?"u":"l"}">${u.status==="gagal"?"Gagal":u.status==="duplikat"?"Sudah ada":"Berhasil"}</span>`}</td><td>${u.virtual?'<span class="hint">Tidak ada arsip file</span>':`<button class="s" data-uv="${esc(u.id)}">Lihat</button> <button class="s" data-ud="${esc(u.id)}">Unduh</button> <button class="s" data-ux="${esc(u.id)}">Hapus</button>`}</td></tr>`).join(""):`<tr><td colspan="9" class="empty">${list.length?"Tidak ada upload yang cocok.":"Belum ada file yang diupload."}</td></tr>`;
  const nv=list.filter(u=>u.virtual).length;$("upNote").hidden=!nv;$("upNote").textContent=nv+" riwayat ditampilkan dari data peserta/rekapan karena catatan upload aslinya tidak tersimpan di database. Nama pengupload, waktu, dan file asli hanya tercatat untuk upload baru.";
  $("upSql").hidden=!(window.Cloud&&!Cloud.upReady());
 }
