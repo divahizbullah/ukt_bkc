@@ -153,6 +153,13 @@ body.anon .avw .dot{background:var(--mute)}
 .bell .nb{position:absolute;top:-5px;right:-5px;margin:0}.bell.on .nb{background:#fff;color:var(--red)}
 .ov{position:fixed;inset:0;z-index:120;background:rgba(10,16,28,.55);display:grid;place-items:center;padding:16px}
 .ov[hidden]{display:none}
+.xp{max-height:50vh;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:4px 14px 12px;background:var(--bg);margin:10px 0 14px}
+.xp table{min-width:0}.xp th,.xp td{white-space:normal}
+.xg h3{font-size:14px;margin:12px 0 4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.xk{font-size:12px;font-weight:700;color:var(--mute);margin:8px 0 2px;text-transform:uppercase;letter-spacing:.03em}
+.xg ol{margin:0;padding-left:22px;font-size:13px}
+.xs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}
+.xs .b{cursor:default}
 .mdl{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 22px 20px;width:100%;max-width:400px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.35);max-height:90vh;overflow:auto;animation:pop .18s ease-out}
 .mdl.wide{max-width:980px;text-align:left}
 .mdl h2{margin:12px 0 8px;font-size:18px}
@@ -277,6 +284,7 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 <div class="lgd"><b>Keterangan nilai:</b><span><span class="nk gm">M</span> Memuaskan</span><span><span class="nk gb">B</span> Baik</span><span><span class="nk gcb">CB</span> Cukup Baik</span><span><span class="nk gc">C</span> Cukup</span></div>
 <div id="mtBody"></div>
 </div></div>
+<div id="xlPv" class="ov np" hidden><div class="mdl wide" style="max-width:720px" role="dialog" aria-modal="true" aria-labelledby="xlT"><h2 id="xlT" style="margin:0 0 4px"></h2><p class="hint" id="xlNote" style="margin:0 0 6px"></p><div id="xlSum" style="font-size:13px;font-weight:700"></div><label class="row" id="xlOptRow" style="margin:8px 0 0;font-size:13px;color:var(--ink)" hidden><input type="checkbox" id="xlOpt" style="width:auto"><span id="xlOptTxt"></span></label><div class="xp" id="xlBody"></div><div class="row" style="justify-content:flex-end"><button id="xlNo" type="button">Batal</button><button class="p" id="xlGo" type="button">Unduh Excel</button></div></div></div>
 <div id="popup" class="ov np" hidden><div class="mdl" role="dialog" aria-modal="true" aria-labelledby="pTitle"><div class="pic" id="pIc"></div><h2 id="pTitle"></h2><div id="pBody"></div><button class="p" id="pOk" type="button">OK</button></div></div>
 <div id="pv" class="ov np" hidden><div class="mdl wide" role="dialog" aria-modal="true" aria-labelledby="pvTitle"><div class="row"><h2 id="pvTitle" style="margin:0;font-size:15px"></h2><span class="sp"></span><button class="s" id="pvClose" type="button">Tutup</button></div><div id="pvBody" class="tw" style="margin-top:10px;max-height:65vh"></div></div></div>
 <div id="cloudBar" class="np"><span id="cloudBadge" data-s="busy">Menghubungkan ke database…</span></div>
@@ -452,9 +460,9 @@ grant select, insert, update, delete on bkc_upload to authenticated;</pre>
 </section></div>
 <div id="vMat" hidden>
 <section class="card np"><h2>Tambah materi ujian</h2>
-<p class="hint" style="margin:0 0 12px">Pilih sabuk, isi kategori, lalu tulis materinya. Boleh banyak sekaligus: satu materi per baris.</p>
+<p class="hint" style="margin:0 0 12px">Pilih sabuk dari dropdown, isi kategori, lalu tulis materinya. Boleh banyak sekaligus: satu materi per baris.</p>
 <div class="grid">
-<div><label for="mtSab">Sabuk / tingkat</label><input id="mtSab" list="tk" placeholder="mis. Kyu 6 (Kuning)"></div>
+<div><label for="mtSab">Sabuk / tingkat</label><select id="mtSab"></select></div>
 <div><label for="mtKat">Kategori</label><input id="mtKat" list="mtk" placeholder="Penguatan Dasar / Kihon / Kata / Kumite"></div>
 </div>
 <datalist id="mtk"><option>Penguatan Dasar<option>Kihon<option>Kata<option>Kumite<option>Lainnya</datalist>
@@ -1385,6 +1393,10 @@ $("upB").onclick=async e=>{const t=e.target.dataset;if(!logged)return;
 
 // ===== Materi ujian =====
 const lvList=()=>[...document.querySelectorAll("#tk option")].map(o=>o.textContent);
+// dropdown tingkat di form manual (peserta dan materi)
+function fillLv(){const L=lvList();["mtSab"].forEach(id=>{const s=$(id);if(!s)return;const v=s.value;s.innerHTML='<option value="">'+"\u2014 Pilih sabuk / tingkat \u2014"+'</option>'+L.map(o=>`<option>${esc(o)}</option>`).join("");s.value=v})}
+function setLv(id,val){const s=$(id);val=String(val||"").trim();if(val&&![...s.options].some(o=>o.value===val)){const o=document.createElement("option");o.textContent=val;s.appendChild(o)}s.value=val}
+fillLv();
 const lvSort=(a,b,L)=>{const f=n=>{const i=L.findIndex(x=>x.toLowerCase()===String(n).toLowerCase());return i<0?999:i};return f(a)-f(b)||String(a).localeCompare(String(b))};
 const matAll=()=>Array.isArray(info.materi)?info.materi:[];
 function matGroups(fil){const L=lvList(),it=matAll().filter(m=>!fil||m.sabuk===fil),sb=[...new Set(it.map(m=>m.sabuk))];
@@ -1404,7 +1416,7 @@ function mtMsg(t,e){$("mtMsg").textContent=t;$("mtMsg").className="m"+(e?" e":""
 $("mtAdd").onclick=()=>{if(!logged)return;
  const L=lvList(),raw=$("mtSab").value.trim(),sb=L.concat(matAll().map(m=>m.sabuk)).find(x=>x.toLowerCase()===raw.toLowerCase())||raw,kat=$("mtKat").value.trim()||"Umum",
   lines=$("mtNm").value.split("\n").map(x=>x.trim()).filter(Boolean);
- if(!sb){mtMsg("Isi sabuk / tingkat dulu.",1);$("mtSab").focus();return}
+ if(!sb){mtMsg("Pilih sabuk / tingkat dulu.",1);$("mtSab").focus();return}
  if(!lines.length){mtMsg("Tulis minimal satu materi.",1);$("mtNm").focus();return}
  const have=new Set(matAll().filter(m=>m.sabuk===sb).map(m=>(m.kat||"Umum").toLowerCase()+"|"+m.nama.toLowerCase())),add=[];
  lines.forEach(nm=>{const k=kat.toLowerCase()+"|"+nm.toLowerCase();if(have.has(k))return;have.add(k);add.push({id:Date.now()+Math.random().toString(36).slice(2,8),sabuk:sb,kat,nama:nm})});
@@ -1426,7 +1438,7 @@ async function dlMateri(fil){
  const dl=await getDl();if(!dl){alert("Unduhan tidak tersedia di tampilan ini.");return}
  const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet(rows);ws["!cols"]=[{wch:22},{wch:14},{wch:5},{wch:40},{wch:16},{wch:12},{wch:16},{wch:12}];XLSX.utils.book_append_sheet(wb,ws,"Materi Ujian");
  try{await dl.save({filename:"Materi_Ujian_BKC"+(fil?"_"+fil.replace(/[^A-Za-z0-9]+/g,"_").replace(/^_|_$/g,""):"")+".xlsx",data:XLSX.write(wb,{type:"array",bookType:"xlsx"})})}catch(e){if(!e||e.code!=="declined")alert("File gagal disimpan.")}}
-$("mtXls").onclick=()=>dlMateri($("mtFil").value);$("gtXls").onclick=()=>dlMateri($("gtFil").value);
+$("mtXls").onclick=()=>dlMateriPv($("mtFil").value);$("gtXls").onclick=()=>dlMateri($("gtFil").value);
 
 // ===== Import materi ujian dari Excel =====
 $("mtOpen").onclick=()=>{$("mtModal").hidden=false;renderMateri()};
@@ -1438,12 +1450,57 @@ async function mtSaveX(sheets,filename){
  const dl=await getDl();if(!dl){alert("Unduhan tidak tersedia di tampilan ini.");return}
  const wb=XLSX.utils.book_new();sheets.forEach(sh=>{const ws=XLSX.utils.aoa_to_sheet(sh.rows);ws["!cols"]=sh.cols.map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws,sh.name)});
  try{await dl.save({filename,data:XLSX.write(wb,{type:"array",bookType:"xlsx"})})}catch(e){if(!e||e.code!=="declined")alert("File gagal disimpan.")}}
-$("mtTpl").onclick=()=>{const L=lvList(),a=L[1]||"Kyu 6 (Kuning)",b=L[2]||"Kyu 5 (Oranye)";
- mtSaveX([{name:"Materi Ujian",cols:[24,20,44],rows:[["Sabuk","Kategori","Materi"],[a,"Penguatan Dasar","Push up 20 kali"],[a,"Kihon","Oi Zuki"],["","","Gedan Barai"],["","Kata","Heian Shodan"],[b,"Kumite","Kihon Ippon Kumite"]]},
-  {name:"Petunjuk",cols:[90],rows:[["Petunjuk pengisian"],["1. Isi sheet 'Materi Ujian': satu materi per baris. Hapus baris contoh sebelum mengisi."],["2. Kolom Sabuk dan Materi wajib diisi. Kategori boleh kosong (dianggap Umum)."],["3. Sabuk atau Kategori yang sama dengan baris di atasnya boleh dikosongkan, otomatis mengikuti baris di atasnya."],["4. Materi yang sama pada sabuk dan kategori yang sama tidak dimasukkan dua kali."],["5. Saat import, pilih apakah materi ditambahkan atau menggantikan materi sabuk yang ada di file."],[""],["Pilihan Sabuk:"]].concat(L.map(x=>[x]))}],"Template_Materi_Ujian.xlsx")};
-$("mtExp").onclick=()=>{const rows=[["Sabuk","Kategori","Materi"]];matGroups("").forEach(g=>g.cats.forEach(c=>c.items.forEach(m=>rows.push([g.sabuk,c.kat,m.nama]))));
- if(rows.length<2){alert("Belum ada materi untuk diekspor.");return}
- mtSaveX([{name:"Materi Ujian",cols:[24,20,44],rows}],"Materi_Ujian_Ekspor.xlsx")};
+// ===== Pratinjau (popup) + Excel dengan dropdown untuk materi =====
+let xlCur=null;
+function xlList(gs){const g2=gs.filter(g=>g.cats.length),cnt=g=>g.cats.reduce((a,c)=>a+c.items.length,0),n=g2.reduce((a,g)=>a+cnt(g),0);
+ return{n,s:g2.length,html:g2.map(g=>`<div class="xg"><h3>${esc(g.sabuk)} <span class="b l">${cnt(g)} materi</span></h3>`+g.cats.map(c=>`<div class="xk">${esc(c.kat)}</div><ol>${c.items.map(m=>`<li>${esc(m.nama)}</li>`).join("")}</ol>`).join("")+`</div>`).join("")}}
+function xlDraw(){const c=xlCur;if(!c)return;const r=c.render($("xlOpt").checked);$("xlSum").textContent=r.sum;$("xlBody").innerHTML=r.html}
+function xlOpen(c){xlCur=c;$("xlT").textContent=c.title;$("xlNote").textContent=c.note||"";$("xlOptRow").hidden=!c.opt;
+ if(c.opt){$("xlOptTxt").textContent=c.opt.label;$("xlOpt").checked=!!c.opt.on}else $("xlOpt").checked=false;
+ $("xlGo").textContent=c.goText||"Unduh Excel";xlDraw();$("xlPv").hidden=false;$("xlGo").focus()}
+function xlClose(){$("xlPv").hidden=true;xlCur=null}
+$("xlNo").onclick=xlClose;$("xlOpt").onchange=xlDraw;
+$("xlPv").addEventListener("click",e=>{if(e.target===$("xlPv"))xlClose()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&xlCur)xlClose()});
+$("xlGo").onclick=async()=>{const c=xlCur;if(!c)return;const on=$("xlOpt").checked;xlClose();await c.go(on)};
+const MT_HEAD=["Sabuk","Kategori","Materi"],MT_COLS=[26,22,48];
+const xlChips=()=>'<p class="hint" style="margin:10px 0 0">Pilihan dropdown di kolom Sabuk:</p><div class="xs">'+lvList().map(x=>`<span class="b l">${esc(x)}</span>`).join("")+'</div>';
+const mtRowsAll=()=>{const r=[];matGroups("").forEach(g=>g.cats.forEach(c=>c.items.forEach(m=>r.push([g.sabuk,c.kat,m.nama]))));return r};
+function mtExample(){const L=lvList(),a=L[1]||"Kyu 6 (Kuning)",b=L[2]||"Kyu 5 (Oranye)";return[[a,"Penguatan Dasar","Push up 20 kali"],[a,"Kihon","Oi Zuki"],["","","Gedan Barai"],["","Kata","Heian Shodan"],[b,"Kumite","Kihon Ippon Kumite"]]}
+function mtPetunjuk(){const L=lvList();return{name:"Petunjuk",cols:[90],rows:[["Petunjuk pengisian"],["1. Isi sheet 'Materi Ujian': satu materi per baris. Hapus baris contoh sebelum mengisi."],["2. Kolom Sabuk berupa dropdown: klik selnya, lalu klik tanda panah untuk memilih (tidak perlu mengetik, jadi tidak salah ketik)."],["3. Kolom Kategori juga berupa dropdown, tetapi kategori lain boleh diketik. Kategori boleh kosong (dianggap Umum)."],["4. Sabuk atau Kategori yang sama dengan baris di atasnya boleh dikosongkan, otomatis mengikuti baris di atasnya."],["5. Materi yang sama pada sabuk dan kategori yang sama tidak dimasukkan dua kali."],["6. Saat import, pilih apakah materi ditambahkan atau menggantikan materi sabuk yang ada di file."],[""],["Pilihan Sabuk:"]].concat(L.map(x=>[x]))}}
+async function mtBuildDD(sheets){
+ const L=lvList(),sabuk=L.slice();matAll().forEach(m=>{if(!sabuk.some(x=>x.toLowerCase()===String(m.sabuk).toLowerCase()))sabuk.push(m.sabuk)});
+ const kats=["Penguatan Dasar","Kihon","Kata","Kumite","Lainnya"];matAll().forEach(m=>{const k=m.kat||"Umum";if(!kats.some(x=>x.toLowerCase()===k.toLowerCase()))kats.push(k)});
+ const wb=new ExcelJS.Workbook(),sh=sheets[0],ws=wb.addWorksheet(sh.name);
+ ws.columns=sh.cols.map((w,i)=>({header:sh.rows[0][i],width:w}));
+ ws.getRow(1).font={bold:true};ws.getRow(1).fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFFDE8EB"}};ws.views=[{state:"frozen",ySplit:1}];
+ sh.rows.slice(1).forEach(r=>ws.addRow(r));
+ sheets.slice(1).forEach(x=>{const w=wb.addWorksheet(x.name);w.columns=x.cols.map(c=>({width:c}));x.rows.forEach(r=>w.addRow(r));w.getRow(1).font={bold:true}});
+ const wl=wb.addWorksheet("Daftar Pilihan");wl.columns=[{header:"Pilihan Sabuk",width:28},{header:"Pilihan Kategori",width:26}];wl.getRow(1).font={bold:true};
+ sabuk.forEach((x,i)=>{wl.getCell(i+2,1).value=x});kats.forEach((x,i)=>{wl.getCell(i+2,2).value=x});
+ const N=Math.max(1000,sh.rows.length+500),
+  dvS={type:"list",allowBlank:true,formulae:["'Daftar Pilihan'!$A$2:$A$"+(sabuk.length+1)],showErrorMessage:true,errorStyle:"stop",errorTitle:"Sabuk tidak valid",error:"Pilih sabuk dari daftar (klik tanda panah).",showInputMessage:true,promptTitle:"Sabuk",prompt:"Klik tanda panah untuk memilih. Kosongkan jika sama dengan baris di atas."},
+  dvK={type:"list",allowBlank:true,formulae:["'Daftar Pilihan'!$B$2:$B$"+(kats.length+1)],showErrorMessage:true,errorStyle:"warning",errorTitle:"Kategori baru",error:"Kategori ini tidak ada di daftar. Tetap gunakan?",showInputMessage:true,promptTitle:"Kategori",prompt:"Pilih dari daftar, atau ketik kategori lain."};
+ for(let i=2;i<=N;i++){ws.getCell(i,1).dataValidation=dvS;ws.getCell(i,2).dataValidation=dvK}
+ return await wb.xlsx.writeBuffer()}
+async function mtSaveDD(sheets,filename){
+ if(typeof ExcelJS==="undefined")return mtSaveX(sheets,filename);
+ const dl=await getDl();if(!dl){alert("Unduhan tidak tersedia di tampilan ini.");return}
+ let buf;try{buf=await mtBuildDD(sheets)}catch(e){return mtSaveX(sheets,filename)}
+ try{await dl.save({filename,data:buf});mtImpMsg("File "+filename+" siap disimpan. Kolom Sabuk dan Kategori berupa pilihan (dropdown).")}catch(e){if(!e||e.code!=="declined")alert("File gagal disimpan.")}}
+$("mtTpl").onclick=()=>{const n=matAll().length;
+ xlOpen({title:"Template Excel Materi Ujian",note:"Ini isi file yang akan diunduh. Kolom Sabuk berupa dropdown agar tidak salah ketik.",
+  opt:n?{label:"Sertakan "+n+" materi yang sudah ada di aplikasi (menggantikan baris contoh)",on:false}:null,
+  render:on=>{if(on){const r=xlList(matGroups(""));return{sum:r.n+" materi di "+r.s+" sabuk akan masuk ke template",html:r.html+xlChips()}}
+   const ex=mtExample();return{sum:"Template berisi "+ex.length+" baris contoh (hapus sebelum mengisi)",html:'<div class="tw"><table><thead><tr><th>Sabuk</th><th>Kategori</th><th>Materi</th></tr></thead><tbody>'+ex.map(r=>`<tr><td>${r[0]?esc(r[0]):'<span class="hint">(sama dengan baris atas)</span>'}</td><td>${r[1]?esc(r[1]):'<span class="hint">(sama dengan baris atas)</span>'}</td><td>${esc(r[2])}</td></tr>`).join("")+'</tbody></table></div>'+xlChips()}},
+  go:on=>mtSaveDD([{name:"Materi Ujian",cols:MT_COLS,rows:[MT_HEAD].concat(on?mtRowsAll():mtExample())},mtPetunjuk()],"Template_Materi_Ujian.xlsx")})};
+$("mtExp").onclick=()=>{const r=xlList(matGroups(""));if(!r.n){alert("Belum ada materi untuk diekspor.");return}
+ xlOpen({title:"Ekspor Materi ke Excel",note:"Materi berikut akan masuk ke file Excel (format sama dengan template, bisa diimport kembali). Kolom Sabuk berupa dropdown.",
+  render:()=>({sum:r.n+" materi di "+r.s+" sabuk akan diekspor",html:r.html}),
+  go:()=>mtSaveDD([{name:"Materi Ujian",cols:MT_COLS,rows:[MT_HEAD].concat(mtRowsAll())}],"Materi_Ujian_Ekspor.xlsx")})};
+function dlMateriPv(fil){const r=xlList(matGroups(fil));if(!r.n){alert("Belum ada materi untuk diunduh.");return}
+ xlOpen({title:"Unduh Materi Ujian (Excel)",note:"File berisi materi "+(fil||"semua sabuk")+" beserta kolom nilai M, B, CB, dan C yang siap diisi penguji.",
+  render:()=>({sum:r.n+" materi di "+r.s+" sabuk akan masuk ke file",html:r.html}),go:()=>dlMateri(fil)})}
 function mtImport(f){
  if(!f||!logged)return;
  if(typeof XLSX==="undefined"){mtImpMsg("Library Excel gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.",1);return}
