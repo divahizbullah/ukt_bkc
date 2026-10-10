@@ -70,6 +70,7 @@ body.pw #secKw{display:block}body.pw #secRekap{display:none}
 body.pk #secList,body.pk #secView,body.pl #secRekap{display:none}
 #secRekap table,#secLap table{min-width:0}
 #secKw{display:none}#secKw table{min-width:0}
+#secKP{display:none}body.pe #secKP{display:block}body.pe #secLap{display:none}#secKP table{min-width:0}
 .kwt{min-width:0;margin:10px 0}.kwt td{border:0;padding:4px 6px;vertical-align:top;font-size:13px}
 .kwamt{border:2px solid #000;padding:6px 14px;font-size:18px;font-weight:800;display:inline-block;margin:6px 0}
 #secLap h3{font-size:14px;margin:18px 0 8px}
@@ -77,6 +78,7 @@ body.pk #secList,body.pk #secView,body.pl #secRekap{display:none}
 .kop h1{font-size:17px}.kop p{margin:0}
 .sign{display:flex;justify-content:space-between;margin-top:40px}
 .sign div{width:200px;text-align:center}.sign span{display:block;margin-top:60px;border-top:1px solid #000}
+.kpg{break-inside:avoid}.kpg+.kpg{break-before:page}
 }
 #cloudBar{position:fixed;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:50;display:flex;gap:6px;align-items:center}
 #cloudBadge{font-size:12px;padding:5px 11px;border-radius:99px;background:var(--card);border:1px solid var(--line);color:var(--mute);max-width:70vw}
@@ -162,6 +164,13 @@ body.anon .avw .dot{background:var(--mute)}
 .xs .b{cursor:default}
 .mdl{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px 22px 20px;width:100%;max-width:400px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.35);max-height:90vh;overflow:auto;animation:pop .18s ease-out}
 .mdl.wide{max-width:980px;text-align:left}
+.kpd{margin:12px 0 4px;border:1px solid var(--line);border-radius:10px;background:var(--bg);padding:6px 14px}
+.kpd div{display:grid;grid-template-columns:150px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.kpd div:last-child{border-bottom:0}.kpd dt{color:var(--mute);font-size:12px;font-weight:700;padding-top:2px}.kpd dd{margin:0;word-break:break-word}
+.kpamt{font-size:26px;font-weight:800;color:var(--red);margin:10px 0 0;letter-spacing:-.01em}
+.kpno{display:inline-block;font-size:12px;font-weight:700;color:var(--mute);background:var(--bg);border:1px solid var(--line);border-radius:99px;padding:2px 10px}
+button.dg{color:var(--red);border-color:var(--red)}
+.kpact{display:flex;flex-wrap:wrap;gap:6px}
 .mdl h2{margin:12px 0 8px;font-size:18px}
 @keyframes pop{from{transform:scale(.94);opacity:0}to{transform:none;opacity:1}}
 .pic{width:62px;height:62px;border-radius:50%;margin:0 auto;display:grid;place-items:center;background:var(--okbg);color:var(--ok)}
@@ -231,6 +240,12 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 <label for="lgPass" style="margin-top:10px">Kata sandi</label><input id="lgPass" type="password" autocomplete="current-password" required>
 <button class="p" style="margin-top:14px;width:100%" type="submit">Masuk</button><button id="lgCancel" type="button" style="margin-top:8px;width:100%">Batal</button><div id="lgMsg" class="m e" role="alert"></div>
 </form></div>
+<div id="kpModal" class="ov np" hidden><div class="mdl wide" style="max-width:600px" role="dialog" aria-modal="true" aria-labelledby="kpTitle">
+<div class="row"><h2 id="kpTitle" style="margin:0">Detail pengeluaran</h2><span class="sp"></span><span class="kpno" id="kpNo"></span></div>
+<div class="kpamt" id="kpAmt"></div><div class="hint" id="kpTb" style="margin:2px 0 0;font-style:italic"></div>
+<dl class="kpd" id="kpDet"></dl>
+<div class="row" style="margin-top:14px"><div class="kpact"><button class="p" id="kpPrint" type="button">Cetak kwitansi</button><button id="kpEdit" type="button">Edit</button><button class="dg" id="kpDel" type="button">Hapus</button></div><span class="sp"></span><button id="kpClose" type="button">Tutup</button></div>
+</div></div>
 <div id="fModal" class="ov np" hidden><div class="mdl wide" style="max-width:760px" role="dialog" aria-modal="true" aria-labelledby="fTitle">
 <h2 id="fTitle">Tambah peserta</h2>
 <p class="m e" id="noDojo" hidden>Belum ada dojo terdaftar. Admin perlu mendaftarkan dojo dulu (menu Administrator, perlu login) sebelum peserta bisa ditambahkan.</p>
@@ -342,6 +357,7 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 </table></div>
 <div class="pr sign"><div>Panitia<span>(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span></div><div>Bendahara<span>(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span></div></div>
 </section>
+<section class="card" id="secKP"><div id="kpBody"></div></section>
 </div>
 <div id="vDoj" hidden>
 <section class="card np" id="secUpList" hidden>
@@ -542,23 +558,27 @@ grant select, insert, update, delete on bkc_upload to authenticated;</pre>
 <div><label for="kKet">Keterangan</label><input id="kKet" placeholder="mis. Konsumsi penguji"></div>
 <div><label for="kKat">Kategori</label><input id="kKat" list="kk"></div>
 <div><label for="kJml">Jumlah (Rp)</label><input id="kJml" type="number" min="0"></div>
+<div><label for="kPen">Dibayarkan kepada (penerima)</label><input id="kPen" placeholder="mis. CV Sumber Rejeki"></div>
+<div><label for="kBen">Dikeluarkan oleh (Bendahara)</label><input id="kBen" placeholder="Nama bendahara"></div>
+<div style="grid-column:1/-1"><label for="kCat">Catatan (opsional)</label><input id="kCat" placeholder="mis. No. nota toko, rincian barang"></div>
 </div>
 <datalist id="kk"><option>Konsumsi<option>Sertifikat dan sabuk<option>Sewa tempat<option>Honor penguji<option>Transportasi<option>Perlengkapan<option>Lain-lain</datalist>
-<div class="row" style="margin-top:12px"><button class="p" id="kSave" type="button">Simpan pengeluaran</button><button id="kCancel" type="button" hidden>Batal edit</button></div>
+<div class="row" style="margin-top:12px"><button class="p" id="kSave" type="button">Simpan pengeluaran</button><span id="kMsg" class="m e" role="alert"></span><button id="kCancel" type="button" hidden>Batal edit</button></div>
 <div style="margin-top:18px;max-width:320px"><label for="iTarif">Setoran ke cabang per peserta (Rp)</label><input id="iTarif" type="number" min="0"></div>
 <p class="hint">Setoran ke cabang dihitung dari jumlah peserta tiap dojo dikali nominal ini.</p>
 </section>
 <section class="card" id="secLap">
 <div class="kop pr"><h1 id="lNama"></h1><p id="lMeta"></p><p><b>Laporan Setoran dan Keuangan</b></p></div>
-<div class="row np" style="margin-bottom:4px"><h2 style="margin:0">Laporan setoran dan keuangan</h2><span class="sp"></span><button class="p" id="printLap" type="button">Cetak laporan</button></div>
+<div class="row np" style="margin-bottom:4px"><h2 style="margin:0">Laporan setoran dan keuangan</h2><span class="sp"></span><button id="printKwAll" type="button">Cetak semua kwitansi</button><button class="p" id="printLap" type="button">Cetak laporan</button></div>
 <h3>Setoran ke cabang per dojo</h3>
 <div class="tw"><table><thead><tr><th>No</th><th>Dojo</th><th>Wilayah</th><th class="n">Peserta</th><th class="n">Total tagihan</th><th class="n">Sudah dibayar</th><th class="n">Setoran ke cabang</th></tr></thead><tbody id="sb"></tbody><tfoot id="sf"></tfoot></table></div>
 <h3>Daftar pengeluaran</h3>
-<div class="tw"><table><thead><tr><th>No</th><th>Tanggal</th><th>Keterangan</th><th>Kategori</th><th class="n">Jumlah</th><th class="np">Aksi</th></tr></thead><tbody id="kb"></tbody><tfoot id="kf"></tfoot></table></div>
+<div class="tw"><table><thead><tr><th>No</th><th>No. kwitansi</th><th>Tanggal</th><th>Keterangan</th><th>Penerima</th><th>Kategori</th><th class="n">Jumlah</th><th class="np">Aksi</th></tr></thead><tbody id="kb"></tbody><tfoot id="kf"></tfoot></table></div>
 <h3>Ringkasan keuangan</h3>
 <div class="tw"><table><tbody id="ring"></tbody></table></div>
 <div class="pr sign"><div>Panitia<span>(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span></div><div>Bendahara<span>(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)</span></div></div>
 </section>
+<section class="card" id="secKP"><div id="kpBody"></div></section>
 </div>
 </div>
 
@@ -816,8 +836,10 @@ function renderSet(){
  $("sb").innerHTML=rows.length?rows.map((o,i)=>{const d=findDojo(o.nm);return `<tr><td>${i+1}</td><td>${esc(o.nm)}</td><td>${esc(d?d.wilayah:"")}</td><td class="n">${o.n}</td><td class="n">${rp(o.tot)}</td><td class="n">${rp(o.lns)}</td><td class="n"><b>${rp(o.n*tarif)}</b></td></tr>`}).join(""):`<tr><td colspan="7" class="empty">Belum ada peserta.</td></tr>`;
  $("sf").innerHTML=`<tr><td colspan="3">Total (${rows.length} dojo)</td><td class="n">${N}</td><td class="n">${rp(T)}</td><td class="n">${rp(L)}</td><td class="n">${rp(S)}</td></tr>`;
  const K=keluar.slice().sort((a,b)=>(a.tgl||"").localeCompare(b.tgl||"")),KT=K.reduce((a,x)=>a+(+x.jml||0),0);
- $("kb").innerHTML=K.length?K.map((x,i)=>`<tr><td>${i+1}</td><td>${fmtTgl(x.tgl)}</td><td>${esc(x.ket)}</td><td>${esc(x.kat)}</td><td class="n">${rp(x.jml)}</td><td class="np"><button class="s" data-ke="${x.id}">Edit</button> <button class="s" data-kd="${x.id}">Hapus</button></td></tr>`).join(""):`<tr><td colspan="6" class="empty">Belum ada pengeluaran. Tambahkan lewat form di atas.</td></tr>`;
- $("kf").innerHTML=`<tr><td colspan="4">Total pengeluaran</td><td class="n">${rp(KT)}</td><td class="np"></td></tr>`;
+ $("kb").innerHTML=K.length?K.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(kpNo(x))}</td><td>${fmtTgl(x.tgl)}</td><td>${esc(x.ket)}</td><td>${esc(x.pen||"-")}</td><td>${esc(x.kat)}</td><td class="n">${rp(x.jml)}</td><td class="np"><button class="s" data-kv="${x.id}">Detail</button> <button class="s" data-kp="${x.id}">Kwitansi</button> <button class="s" data-ke="${x.id}">Edit</button> <button class="s dg" data-kd="${x.id}">Hapus</button></td></tr>`).join(""):`<tr><td colspan="8" class="empty">Belum ada pengeluaran. Tambahkan lewat form di atas.</td></tr>`;
+ $("kf").innerHTML=`<tr><td colspan="6">Total pengeluaran</td><td class="n">${rp(KT)}</td><td class="np"></td></tr>`;
+ if(!editK&&!$("kBen").value)$("kBen").value=defBen();
+ if(kpOpen&&!$("kpModal").hidden){const o=keluar.find(k=>k.id===kpOpen);if(o)kpFill(o);else kpHide()}
  const sal=L-KT,items=[["Total tagihan peserta",T],["Pemasukan diterima (lunas)",L],["Belum dibayar",T-L],["Total pengeluaran",KT],["Saldo (pemasukan dikurangi pengeluaran)",sal],["Setoran ke cabang ("+N+" peserta x "+rp(tarif)+")",S],["Saldo setelah setoran",sal-S]];
  $("ring").innerHTML=items.map(([a,b],i)=>`<tr><td>${a}</td><td class="n">${i===items.length-1?"<b>"+rp(b)+"</b>":rp(b)}</td></tr>`).join("");
  $("lNama").textContent=info.nama||"Ujian Kenaikan Tingkat Karate";$("lMeta").textContent=$("pMeta").textContent;
@@ -926,19 +948,82 @@ $("fDojo").onchange=()=>{const d=findDojo($("fDojo").value);$("fWil").value=d?d.
 function tab(v){["Pes","Doj","Adm","Set","Pro","Not","Up","Mat","Wil","Ujn"].forEach(k=>{$("v"+k).hidden=k!==v;const b=$("t"+k);if(b)b.classList.toggle("on",k===v)});$("bell").classList.toggle("on",v==="Not");if(v==="Up")renderUp();if(v==="Mat"||v==="Ujn")renderMateri();if(v==="Wil")renderWil()}
 // keuangan
 $("iTarif").oninput=e=>{info.tarif=+e.target.value||0;save();renderSet()};
-function resetK(){["kTgl","kKet","kKat","kJml"].forEach(i=>$(i).value="");editK=null;$("kTitle").textContent="Input pengeluaran";$("kCancel").hidden=true}
+var kpOpen=null;
+const defBen=()=>{let p=null;try{p=PF}catch(e){}return(info.bendahara||(p&&(p.nama||p.username))||"").trim()};
+const tglPjg=t=>t?new Date(t).toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}):"";
+// nomor kwitansi: disimpan saat input; data lama (tanpa nomor) diberi nomor otomatis berdasarkan urutan input
+function kpNo(x){if(x.no)return x.no;const i=keluar.findIndex(k=>k.id===x.id);return "KK/"+String(((x.tgl||"").slice(0,4))||new Date().getFullYear())+"/"+String(i+1).padStart(3,"0")}
+function nextNo(tgl){const y=((tgl||"").slice(0,4))||String(new Date().getFullYear());let mx=0;keluar.forEach(k=>{const m=/^KK\/(\d{4})\/(\d+)$/.exec(kpNo(k));if(m&&m[1]===y)mx=Math.max(mx,+m[2])});return "KK/"+y+"/"+String(mx+1).padStart(3,"0")}
+function kMsg(t){$("kMsg").textContent=t||""}
+function resetK(){["kTgl","kKet","kKat","kJml","kPen","kCat"].forEach(i=>$(i).value="");$("kBen").value=defBen();editK=null;kMsg("");$("kTitle").textContent="Input pengeluaran";$("kCancel").hidden=true}
 $("kCancel").onclick=resetK;
 $("kSave").onclick=()=>{
- const x={id:editK||Date.now()+Math.random().toString(36).slice(2,6),tgl:$("kTgl").value,ket:$("kKet").value.trim(),kat:$("kKat").value.trim(),jml:+$("kJml").value||0};
- if(!x.ket){$("kKet").focus();return}
- if(!x.jml){$("kJml").focus();return}
+ const old=editK?keluar.find(k=>k.id===editK):null,tgl=$("kTgl").value;
+ const x={...(old||{}),id:editK||Date.now()+Math.random().toString(36).slice(2,6),tgl,ket:$("kKet").value.trim(),kat:$("kKat").value.trim(),jml:+$("kJml").value||0,pen:$("kPen").value.trim(),ben:$("kBen").value.trim(),cat:$("kCat").value.trim()};
+ if(!tgl){kMsg("Isi tanggal pengeluaran.");$("kTgl").focus();return}
+ if(!x.ket){kMsg("Isi keterangan pengeluaran.");$("kKet").focus();return}
+ if(!x.jml){kMsg("Isi jumlah pengeluaran.");$("kJml").focus();return}
+ if(!x.pen){kMsg("Isi nama penerima (dibayarkan kepada).");$("kPen").focus();return}
+ if(!x.ben){kMsg("Isi nama bendahara yang mengeluarkan uang.");$("kBen").focus();return}
+ if(!x.no)x.no=old?kpNo(old):nextNo(tgl);
+ info.bendahara=x.ben;
  if(editK)keluar=keluar.map(k=>k.id===editK?x:k);else keluar.push(x);
  save();resetK();renderSet();
 };
+function editKel(id){
+ const k=keluar.find(x=>x.id===id);if(!k)return;
+ editK=k.id;kMsg("");$("kTgl").value=k.tgl||"";$("kKet").value=k.ket||"";$("kKat").value=k.kat||"";$("kJml").value=k.jml;$("kPen").value=k.pen||"";$("kBen").value=k.ben||defBen();$("kCat").value=k.cat||"";
+ $("kTitle").textContent="Edit pengeluaran "+kpNo(k);$("kCancel").hidden=false;
+ $("kTitle").scrollIntoView({behavior:"smooth",block:"center"});$("kKet").focus({preventScroll:true});
+}
+function hapusKel(id){
+ const k=keluar.find(x=>x.id===id);if(!k)return false;
+ if(!confirm("Hapus pengeluaran "+kpNo(k)+" ("+k.ket+", "+rp(k.jml)+")?"))return false;
+ keluar=keluar.filter(x=>x.id!==id);if(editK===id)resetK();save();renderSet();return true;
+}
+// popup detail
+function kpFill(k){
+ $("kpNo").textContent=kpNo(k);$("kpAmt").textContent=rp(k.jml);$("kpTb").textContent="Terbilang: "+tb(k.jml);
+ const r=(a,b)=>`<div><dt>${a}</dt><dd>${b?esc(b):"-"}</dd></div>`;
+ $("kpDet").innerHTML=r("Tanggal",tglPjg(k.tgl))+r("Keterangan",k.ket)+r("Kategori",k.kat)+r("Dibayarkan kepada",k.pen)+r("Dikeluarkan oleh (Bendahara)",k.ben)+r("Catatan",k.cat);
+}
+function kpShow(id){const k=keluar.find(x=>x.id===id);if(!k)return;kpOpen=id;kpFill(k);$("kpModal").hidden=false;$("kpPrint").focus()}
+function kpHide(){kpOpen=null;$("kpModal").hidden=true}
+$("kpClose").onclick=kpHide;
+$("kpModal").onclick=e=>{if(e.target===$("kpModal"))kpHide()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("kpModal").hidden)kpHide()});
+$("kpPrint").onclick=()=>kpPrint([kpOpen]);
+$("kpEdit").onclick=()=>{const id=kpOpen;kpHide();editKel(id)};
+$("kpDel").onclick=()=>{if(hapusKel(kpOpen))kpHide()};
+// cetak kwitansi pengeluaran (satu atau semua)
+function kpHtml(k){
+ const tempat=(info.tempat||"").trim(),tgl=tglPjg(k.tgl),ben=(k.ben||defBen()||"").trim();
+ const blank="(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)";
+ return `<div class="kpg"><div class="kop"><h1>${esc((info.org||"").trim()||info.nama||"Ujian Kenaikan Tingkat Karate")}</h1>${info.org&&info.nama?`<p>${esc(info.nama)}</p>`:""}<p>${esc($("pMeta").textContent)}</p><p><b>KWITANSI PENGELUARAN</b></p></div>
+ <table class="kwt"><tbody>
+ <tr><td style="width:170px">No. kwitansi</td><td>: ${esc(kpNo(k))}</td></tr>
+ <tr><td>Tanggal</td><td>: ${esc(tgl)}</td></tr>
+ <tr><td>Dibayarkan kepada</td><td>: ${esc(k.pen||"-")}</td></tr>
+ <tr><td>Uang sejumlah</td><td>: <i>${esc(tb(k.jml))}</i></td></tr>
+ <tr><td>Untuk pembayaran</td><td>: ${esc(k.ket)}${k.kat?" ("+esc(k.kat)+")":""}</td></tr>
+ ${k.cat?`<tr><td>Catatan</td><td>: ${esc(k.cat)}</td></tr>`:""}</tbody></table>
+ <div class="kwamt">${rp(k.jml)}</div>
+ <p style="text-align:right;margin:18px 0 0">${esc(tempat)}${tempat?", ":""}${esc(tgl)}</p>
+ <div class="sign"><div>Penerima<span>${k.pen?esc(k.pen):blank}</span></div><div>Bendahara (yang mengeluarkan)<span>${ben?esc(ben):blank}</span></div></div></div>`;
+}
+function kpPrint(ids){
+ const L=ids.map(id=>keluar.find(k=>k.id===id)).filter(Boolean);
+ if(!L.length){alert("Belum ada pengeluaran yang bisa dicetak.");return}
+ $("kpBody").innerHTML=L.map(kpHtml).join("");
+ doPrint("pe");
+}
+$("printKwAll").onclick=()=>kpPrint(keluar.slice().sort((a,b)=>(a.tgl||"").localeCompare(b.tgl||"")).map(k=>k.id));
 $("kb").onclick=e=>{
- const t=e.target.dataset;
- if(t.kd&&confirm("Hapus pengeluaran ini?")){keluar=keluar.filter(k=>k.id!==t.kd);save();renderSet()}
- if(t.ke){const k=keluar.find(x=>x.id===t.ke);editK=k.id;$("kTgl").value=k.tgl||"";$("kKet").value=k.ket;$("kKat").value=k.kat||"";$("kJml").value=k.jml;$("kTitle").textContent="Edit pengeluaran";$("kCancel").hidden=false;$("kKet").focus()}
+ const b=e.target.closest("button");if(!b)return;const t=b.dataset;
+ if(t.kv)kpShow(t.kv);
+ if(t.kp)kpPrint([t.kp]);
+ if(t.ke)editKel(t.ke);
+ if(t.kd)hapusKel(t.kd);
 };
 $("printLap").onclick=()=>window.print();
 $("tPes").onclick=()=>tab("Pes");$("tAdm").onclick=()=>tab("Adm");$("tSet").onclick=()=>tab("Set");$("tDoj").onclick=()=>tab("Doj");$("tUp").onclick=()=>tab("Up");$("tMat").onclick=()=>tab("Mat");$("tWil").onclick=()=>tab("Wil");$("tUjn").onclick=()=>tab("Ujn");$("bell").onclick=()=>tab("Not");
@@ -1636,7 +1721,7 @@ $("bkXlsx").onclick=async()=>{
   add("Info Ujian",[["Nama kegiatan",info.nama||""],["Tanggal",tglOut(info.tgl)],["Tempat",info.tempat||""],["Penyelenggara",info.org||""],["Setoran per peserta (Rp)",info.tarif||0]],[26,40]);
   add("Peserta",[HEAD].concat(data.map(p=>[p.nama,p.dojo,p.wilayah||"",p.tmp||"",tglOut(p.tgl),p.dari,p.ke])),[30,24,20,20,16,22,22]);
   add("Dojo",[["Nama Dojo","Wilayah","Pelatih","Kontak","Email","Biaya Ujian (Rp)","Status","Jumlah Peserta"]].concat(dojos.map(d=>[d.nama,d.wilayah||"",d.pelatih||"",d.telp||"",d.email||"",+d.ujian||0,d.status==="Lunas"?"Lunas":"Belum",data.filter(p=>(p.dojo||"").toLowerCase()===d.nama.toLowerCase()).length])),[26,20,22,18,26,16,10,14]);
-  add("Pengeluaran",[["Tanggal","Keterangan","Kategori","Jumlah (Rp)"]].concat(keluar.map(x=>[tglOut(x.tgl),x.ket||"",x.kat||"",+x.jml||0])),[14,36,18,16]);
+  add("Pengeluaran",[["No. Kwitansi","Tanggal","Keterangan","Kategori","Dibayarkan kepada","Bendahara","Catatan","Jumlah (Rp)"]].concat(keluar.map(x=>[kpNo(x),tglOut(x.tgl),x.ket||"",x.kat||"",x.pen||"",x.ben||"",x.cat||"",+x.jml||0])),[18,14,36,18,24,22,28,16]);
   const buf=XLSX.write(wb,{type:"array",bookType:"xlsx"});
   await dl.save({filename:"Data_Lengkap_Ujian_BKC.xlsx",data:buf});bkm("File Excel tersimpan di perangkat Anda.")
  }catch(e){bkm(e&&e.code==="declined"?"Penyimpanan dibatalkan.":"File gagal dibuat/disimpan.",1)}
