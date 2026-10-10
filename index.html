@@ -240,6 +240,13 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 <label for="lgPass" style="margin-top:10px">Kata sandi</label><input id="lgPass" type="password" autocomplete="current-password" required>
 <button class="p" style="margin-top:14px;width:100%" type="submit">Masuk</button><button id="lgCancel" type="button" style="margin-top:8px;width:100%">Batal</button><div id="lgMsg" class="m e" role="alert"></div>
 </form></div>
+<div id="klModal" class="ov np" hidden><div class="mdl wide" style="max-width:940px" role="dialog" aria-modal="true" aria-labelledby="klTitle">
+<div class="row"><h2 id="klTitle" style="margin:0">Semua kwitansi pengeluaran</h2><span class="sp"></span><button id="klClose" type="button">Tutup</button></div>
+<div class="row" style="margin:12px 0 8px"><div style="flex:1;min-width:200px"><label for="klQ">Cari kwitansi</label><input id="klQ" type="search" placeholder="Nomor, keterangan, penerima, kategori..."></div></div>
+<div class="row" style="margin-bottom:8px"><span class="hint" id="klInfo" style="margin:0"></span><span class="sp"></span><button id="klPrintSel" type="button">Cetak terpilih</button><button class="p" id="klPrintAll" type="button">Cetak semua yang tampil</button></div>
+<div class="tw" style="border:1px solid var(--line);border-radius:10px"><table style="min-width:720px"><thead><tr><th style="width:34px"><input type="checkbox" id="klAll" style="width:auto" aria-label="Pilih semua"></th><th>No. kwitansi</th><th>Tanggal</th><th>Keterangan</th><th>Penerima</th><th class="n">Jumlah</th><th>Aksi</th></tr></thead><tbody id="klBody"></tbody></table></div>
+<p class="hint">Centang beberapa kwitansi lalu klik Cetak terpilih, atau cetak satu per satu dengan tombol Cetak di tiap baris.</p>
+</div></div>
 <div id="kpModal" class="ov np" hidden><div class="mdl wide" style="max-width:600px" role="dialog" aria-modal="true" aria-labelledby="kpTitle">
 <div class="row"><h2 id="kpTitle" style="margin:0">Detail pengeluaran</h2><span class="sp"></span><span class="kpno" id="kpNo"></span></div>
 <div class="kpamt" id="kpAmt"></div><div class="hint" id="kpTb" style="margin:2px 0 0;font-style:italic"></div>
@@ -569,7 +576,7 @@ grant select, insert, update, delete on bkc_upload to authenticated;</pre>
 </section>
 <section class="card" id="secLap">
 <div class="kop pr"><h1 id="lNama"></h1><p id="lMeta"></p><p><b>Laporan Setoran dan Keuangan</b></p></div>
-<div class="row np" style="margin-bottom:4px"><h2 style="margin:0">Laporan setoran dan keuangan</h2><span class="sp"></span><button id="printKwAll" type="button">Cetak semua kwitansi</button><button class="p" id="printLap" type="button">Cetak laporan</button></div>
+<div class="row np" style="margin-bottom:4px"><h2 style="margin:0">Laporan setoran dan keuangan</h2><span class="sp"></span><button id="openKl" type="button">Lihat semua kwitansi</button><button id="printKwAll" type="button">Cetak semua kwitansi</button><button class="p" id="printLap" type="button">Cetak laporan</button></div>
 <h3>Setoran ke cabang per dojo</h3>
 <div class="tw"><table><thead><tr><th>No</th><th>Dojo</th><th>Wilayah</th><th class="n">Peserta</th><th class="n">Total tagihan</th><th class="n">Sudah dibayar</th><th class="n">Setoran ke cabang</th></tr></thead><tbody id="sb"></tbody><tfoot id="sf"></tfoot></table></div>
 <h3>Daftar pengeluaran</h3>
@@ -840,6 +847,7 @@ function renderSet(){
  $("kf").innerHTML=`<tr><td colspan="6">Total pengeluaran</td><td class="n">${rp(KT)}</td><td class="np"></td></tr>`;
  if(!editK&&!$("kBen").value)$("kBen").value=defBen();
  if(kpOpen&&!$("kpModal").hidden){const o=keluar.find(k=>k.id===kpOpen);if(o)kpFill(o);else kpHide()}
+ if(typeof klIsOpen==="function"&&klIsOpen())klRender();
  const sal=L-KT,items=[["Total tagihan peserta",T],["Pemasukan diterima (lunas)",L],["Belum dibayar",T-L],["Total pengeluaran",KT],["Saldo (pemasukan dikurangi pengeluaran)",sal],["Setoran ke cabang ("+N+" peserta x "+rp(tarif)+")",S],["Saldo setelah setoran",sal-S]];
  $("ring").innerHTML=items.map(([a,b],i)=>`<tr><td>${a}</td><td class="n">${i===items.length-1?"<b>"+rp(b)+"</b>":rp(b)}</td></tr>`).join("");
  $("lNama").textContent=info.nama||"Ujian Kenaikan Tingkat Karate";$("lMeta").textContent=$("pMeta").textContent;
@@ -991,9 +999,9 @@ function kpShow(id){const k=keluar.find(x=>x.id===id);if(!k)return;kpOpen=id;kpF
 function kpHide(){kpOpen=null;$("kpModal").hidden=true}
 $("kpClose").onclick=kpHide;
 $("kpModal").onclick=e=>{if(e.target===$("kpModal"))kpHide()};
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("kpModal").hidden)kpHide()});
+document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;if(!$("kpModal").hidden)kpHide();else if(!$("klModal").hidden)klHide()});
 $("kpPrint").onclick=()=>kpPrint([kpOpen]);
-$("kpEdit").onclick=()=>{const id=kpOpen;kpHide();editKel(id)};
+$("kpEdit").onclick=()=>{const id=kpOpen;kpHide();klHide();editKel(id)};
 $("kpDel").onclick=()=>{if(hapusKel(kpOpen))kpHide()};
 // cetak kwitansi pengeluaran (satu atau semua)
 function kpHtml(k){
@@ -1017,6 +1025,30 @@ function kpPrint(ids){
  $("kpBody").innerHTML=L.map(kpHtml).join("");
  doPrint("pe");
 }
+
+// popup daftar semua kwitansi
+var klSel=new Set();
+const klIsOpen=()=>!$("klModal").hidden;
+function klRows(){const q=($("klQ").value||"").trim().toLowerCase();return keluar.slice().sort((a,b)=>(a.tgl||"").localeCompare(b.tgl||"")||kpNo(a).localeCompare(kpNo(b))).filter(k=>!q||[kpNo(k),k.ket,k.pen,k.kat,k.ben,k.cat].join(" ").toLowerCase().includes(q))}
+function klRender(){
+ const ids=new Set(keluar.map(k=>k.id));[...klSel].forEach(i=>{if(!ids.has(i))klSel.delete(i)});
+ const L=klRows(),T=L.reduce((a,k)=>a+(+k.jml||0),0);
+ $("klInfo").textContent=L.length+" dari "+keluar.length+" kwitansi | Total "+rp(T);
+ $("klBody").innerHTML=L.length?L.map(k=>`<tr><td><input type="checkbox" style="width:auto" data-ks="${k.id}" ${klSel.has(k.id)?"checked":""} aria-label="Pilih ${esc(kpNo(k))}"></td><td>${esc(kpNo(k))}</td><td>${fmtTgl(k.tgl)}</td><td style="white-space:normal;min-width:160px">${esc(k.ket)}</td><td>${esc(k.pen||"-")}</td><td class="n">${rp(k.jml)}</td><td><button class="s p" data-kp="${k.id}">Cetak</button> <button class="s" data-kv="${k.id}">Detail</button></td></tr>`).join(""):`<tr><td colspan="7" class="empty">${keluar.length?"Tidak ada kwitansi yang cocok.":"Belum ada kwitansi. Input pengeluaran dulu lewat form."}</td></tr>`;
+ const n=L.filter(k=>klSel.has(k.id)).length;
+ $("klAll").checked=!!L.length&&n===L.length;$("klPrintSel").textContent="Cetak terpilih"+(klSel.size?" ("+klSel.size+")":"");$("klPrintSel").disabled=!klSel.size;$("klPrintAll").disabled=!L.length;
+}
+function klShow(){klSel.clear();$("klQ").value="";klRender();$("klModal").hidden=false;$("klQ").focus()}
+function klHide(){$("klModal").hidden=true}
+$("openKl").onclick=klShow;
+$("klClose").onclick=klHide;
+$("klModal").onclick=e=>{if(e.target===$("klModal"))klHide()};
+$("klQ").oninput=klRender;
+$("klAll").onchange=e=>{klRows().forEach(k=>e.target.checked?klSel.add(k.id):klSel.delete(k.id));klRender()};
+$("klBody").onchange=e=>{const id=e.target.dataset.ks;if(!id)return;e.target.checked?klSel.add(id):klSel.delete(id);klRender()};
+$("klBody").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.kp)kpPrint([b.dataset.kp]);if(b.dataset.kv)kpShow(b.dataset.kv)};
+$("klPrintAll").onclick=()=>kpPrint(klRows().map(k=>k.id));
+$("klPrintSel").onclick=()=>kpPrint(klRows().filter(k=>klSel.has(k.id)).map(k=>k.id));
 $("printKwAll").onclick=()=>kpPrint(keluar.slice().sort((a,b)=>(a.tgl||"").localeCompare(b.tgl||"")).map(k=>k.id));
 $("kb").onclick=e=>{
  const b=e.target.closest("button");if(!b)return;const t=b.dataset;
