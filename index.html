@@ -17,6 +17,8 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Plus Jakarta Sans",system-ui,sans-serif}
 .wrap{max-width:1100px;margin:0 auto;padding:20px 16px 48px}
+.wrap{min-height:calc(100vh - 64px)}
+.credit{text-align:center;color:var(--mute);font-size:12px;font-weight:500;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);max-width:1100px;margin:0 auto}
 header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
 .logo{cursor:pointer;overflow:hidden;width:56px;height:56px;border-radius:50%;background:transparent;color:#fff;display:grid;place-items:center;font-weight:800;font-size:22px;flex:none}
 h1{font-size:22px;margin:0;font-weight:800;letter-spacing:-.01em}
@@ -588,6 +590,7 @@ grant select, insert, update, delete on bkc_upload to authenticated;</pre>
 <section class="card" id="secKP"><div id="kpBody"></div></section>
 </div>
 </div>
+<footer class="credit np">Create by : Diva Hizbullah, S.Kom</footer>
 
 <script>
 // ===== Sinkronisasi database + akun (Supabase) =====
