@@ -333,7 +333,7 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 <div class="drop" id="drop" style="margin-top:10px">Isi nama dojo dan nama pengupload dulu, lalu tarik file Excel (.xlsx, .xls, .csv) ke sini, atau
 <button class="p" id="pick" type="button">Pilih file</button>
 <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden></div>
-<div class="row" id="xlRow" style="margin-top:8px" hidden><button class="s" id="tplBtn" type="button">Unduh Template Excel</button> <button class="s" id="expBtn" type="button">Ekspor Data Peserta (format sama)</button></div>
+<div class="row" id="xlRow" style="margin-top:8px" hidden><button class="s" id="tplBtn" type="button">Unduh Template Excel</button> <button class="s" id="tplDrv" type="button" hidden>Template Google Drive (lama)</button> <button class="s" id="expBtn" type="button">Ekspor Data Peserta (format sama)</button></div>
 <p class="hint">Baris pertama harus berisi judul kolom: <b>Nama</b>, <b>Dojo</b> (boleh dikosongkan, otomatis memakai dojo yang dipilih di atas), <b>Wilayah</b>, <b>Tempat Lahir</b>, <b>Tanggal Lahir</b>, <b>Tingkat Sekarang</b>, <b>Tingkat Tujuan</b>. Format tanggal: 31-12-2010 (hari-bulan-tahun). Template Excel dari tombol di bawah sudah memakai pilihan (dropdown) untuk Dojo, Tingkat Sekarang, dan Tingkat Tujuan agar tidak salah ketik. Dojo harus sudah terdaftar di menu Administrator; Tingkat Tujuan otomatis mengikuti Tingkat Sekarang (mis. Kyu 7 (Putih) menjadi Kyu 6 (Kuning)); bila kosong, sistem mengisinya sendiri. Jika kolom Wilayah kosong, wilayah diisi dari data dojo. Wilayah di file hanya dipakai jika sudah terdaftar di menu Wilayah (pilih dari dropdown di template); isian lain seperti angka "1" diabaikan dan memakai wilayah dojo, karena wilayah baru hanya bisa ditambah di menu Wilayah; Pelatih selalu diisi otomatis dari data dojo. Baris yang kolom Dojo-nya berbeda dengan dojo yang dipilih di atas ditolak. Nama yang sama dianggap satu orang: tidak akan dobel, baris kembar di file digabung, dan peserta yang namanya sudah ada otomatis diperbarui dengan isian terbaru dari file (tempat/tanggal lahir, tingkat, wilayah); nama tidak berubah, sel kosong tidak menghapus data lama, dan peserta lain di dojo tidak ikut terhapus. Biaya ujian dan status pembayaran diatur per dojo di menu Administrator. Contoh: <i>Kyu 7 (Putih)</i> ke <i>Kyu 6 (Kuning)</i>.</p>
 <div id="msg" role="status"></div>
 <div class="row" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)"><span class="hint" style="margin:0">Hanya satu atau dua peserta? Isi lewat formulir.</span><button id="addMan" type="button" style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Tambah Peserta Secara Manual</button></div>
@@ -412,6 +412,11 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 <p class="hint" style="margin:0 0 12px">Berita acara penyetoran biaya ujian untuk semua peserta di semua dojo. Isian di bawah tersimpan otomatis (dokumen tidak ditampilkan di halaman agar ringan; dokumen dibuat saat Anda klik Cetak atau Simpan PDF) dan dipakai juga oleh berita acara per dojo di menu Dojo, sehingga pelatih dojo tidak perlu mengisi lagi. Kop surat memakai Nama kegiatan, Penyelenggara, Tempat, dan Tanggal dari kartu Info ujian (serta logo jika sudah dipasang). Jumlah peserta per tingkat dihitung otomatis dari kolom <b>Tingkat Tujuan</b>.</p>
 <div class="grid" id="baFA"></div>
 <div class="row" style="margin-top:12px"><button class="p" id="baPA" type="button">Cetak berita acara</button><button id="baDA" type="button">Simpan PDF</button></div>
+</section>
+<section class="card np" id="secBAAll"><h2>Berita acara semua dojo (sekali unduh)</h2>
+<p class="hint" style="margin:0 0 12px">Satu klik membuat berita acara penyetoran untuk <b>setiap dojo</b> yang punya peserta, lalu mengunduhnya sebagai satu file ZIP berisi satu PDF per dojo (mis. <i>Berita_Acara_UKT_Nama_Dojo.pdf</i>), siap Anda kirim ke masing-masing dojo. Isi tiap berita acara (jumlah peserta per tingkat, nominal, penyetor dari nama pelatih dojo) sama dengan tombol Cetak/Simpan PDF di menu Dojo, dan memakai isian Periode, Tahun, Kota, Tanggal, dan Penerima dari kartu di atas. Dojo yang belum punya peserta dilewati.</p>
+<div class="row"><button class="p" id="baAllZ" type="button">Unduh berita acara semua dojo (ZIP)</button></div>
+<div id="baAllMsg" class="m" role="status"></div>
 </section>
 <section class="card np"><h2>Backup data</h2>
 <p class="hint" style="margin:0 0 12px">Ada dua cara menyimpan backup: <b>unduh langsung ke perangkat</b> (tanpa email), atau kirim lewat email. Backup berisi semua peserta, dojo, info ujian, dan setoran/keuangan.</p>
@@ -799,6 +804,7 @@ function refreshL(){const e=$("lDojo"),v=e.value;
  $("q").placeholder=logged?"Cari nama / dojo":"Cari nama peserta"}
 $("lDojo").onchange=()=>render();
 function render(){
+ {const b=$("tplDrv");if(b)b.hidden=!tplLink(info.tpl)}
  refreshL();
  const k=$("q").value.toLowerCase(),dk=$("lDojo").value.trim().toLowerCase(),need=!logged&&!dk;
  $("pDoj").textContent=dk?"Daftar peserta: "+$("lDojo").value:"Daftar peserta: semua dojo";
@@ -1417,6 +1423,36 @@ async function baSave(m){
  const nm="Berita_Acara_UKT"+(m.wk?"_Wilayah_"+m.wk.replace(/[^A-Za-z0-9]+/g,"_").replace(/^_|_$/g,""):m.dojo?"_"+m.dojo.replace(/[^A-Za-z0-9]+/g,"_").replace(/^_|_$/g,""):"_Semua_Dojo")+".pdf";
  const lg=await baLogoJpg();
  try{await dl.save({filename:nm,data:baPdf(m,lg)})}catch(e){if(!e||e.code!=="declined")alert("File gagal disimpan.")}}
+// ZIP sederhana (tanpa kompresi, PDF sudah ringkas) agar semua berita acara dojo bisa diunduh dalam satu file
+function zipStore(files){
+ const T=zipStore.t||(zipStore.t=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})());
+ const crc=u=>{let c=-1;for(let i=0;i<u.length;i++)c=T[(c^u[i])&255]^(c>>>8);return(c^-1)>>>0};
+ const d=new Date(),tm=((d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1))&0xFFFF,dy=(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate())&0xFFFF;
+ const enc=new TextEncoder(),parts=[],cd=[];let off=0;
+ files.forEach(f=>{const nm=enc.encode(f.name),c=crc(f.data),n=f.data.length,h=new DataView(new ArrayBuffer(30));
+  h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(10,tm,true);h.setUint16(12,dy,true);h.setUint32(14,c,true);h.setUint32(18,n,true);h.setUint32(22,n,true);h.setUint16(26,nm.length,true);
+  parts.push(new Uint8Array(h.buffer),nm,f.data);
+  const g=new DataView(new ArrayBuffer(46));g.setUint32(0,0x02014b50,true);g.setUint16(4,20,true);g.setUint16(6,20,true);g.setUint16(8,0x0800,true);g.setUint16(12,tm,true);g.setUint16(14,dy,true);g.setUint32(16,c,true);g.setUint32(20,n,true);g.setUint32(24,n,true);g.setUint16(28,nm.length,true);g.setUint32(42,off,true);
+  cd.push(new Uint8Array(g.buffer),nm);off+=30+nm.length+n});
+ let cs=0;cd.forEach(x=>cs+=x.length);
+ const e=new DataView(new ArrayBuffer(22));e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cs,true);e.setUint32(16,off,true);
+ const all=parts.concat(cd,[new Uint8Array(e.buffer)]);let tot=0;all.forEach(x=>tot+=x.length);const o=new Uint8Array(tot);let p=0;all.forEach(x=>{o.set(x,p);p+=x.length});return o}
+function baAllMsg(t,e){const el=$("baAllMsg");el.textContent=t;el.className="m"+(e?" e":"")}
+async function baAllDojo(){
+ const keys=[...new Set(data.map(p=>((p.dojo||"").trim()||"(Tanpa dojo)").toLowerCase()))];
+ if(!keys.length){baAllMsg("Belum ada peserta, jadi belum ada berita acara yang bisa dibuat.",1);return}
+ const btn=$("baAllZ");btn.disabled=true;baAllMsg("Membuat berita acara "+keys.length+" dojo...");
+ try{
+  const dl=await getDl();if(!dl){baAllMsg("Unduhan tidak tersedia di tampilan ini.",1);return}
+  const lg=await baLogoJpg(),ms=keys.map(k=>baModel(k)).sort((a,b)=>String(a.dojo).localeCompare(String(b.dojo))),used=new Set(),files=[];
+  ms.forEach(m=>{let b=("Berita_Acara_UKT_"+String(m.dojo||"Tanpa_Dojo").normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"_").replace(/^_+|_+$/g,"")).slice(0,80),nm=b+".pdf",i=2;
+   while(used.has(nm.toLowerCase()))nm=b+"_"+(i++)+".pdf";used.add(nm.toLowerCase());files.push({name:nm,data:baPdf(m,lg)})});
+  const kosong=dojos.filter(d=>!keys.includes((d.nama||"").trim().toLowerCase())).length;
+  try{await dl.save({filename:"Berita_Acara_UKT_Semua_Dojo.zip",data:zipStore(files)});
+   baAllMsg(files.length+" berita acara dojo dikemas dalam Berita_Acara_UKT_Semua_Dojo.zip."+(kosong?" "+kosong+" dojo belum punya peserta sehingga dilewati.":""))}
+  catch(e){if(!e||e.code!=="declined")baAllMsg("File gagal disimpan.",1);else baAllMsg("Penyimpanan dibatalkan.",1)}
+ }catch(e){baAllMsg("Berita acara gagal dibuat. Coba lagi.",1)}
+ finally{btn.disabled=false}}
 function baForm(p,full){
  const f=(k,l,h,t)=>`<div><label for="${p}${k}">${l}</label><input id="${p}${k}" data-k="${k}"${t?` type="${t}"`:""}${h?` placeholder="${h}"`:""}></div>`;
  return f("per","Periode","mis. I atau Oktober")+f("thn","Tahun","2026")+f("kota","Kota","Bogor")+f("tgl","Tanggal","","date")+(full?f("peny","Nama penyetor","Opsional"):"")+f("pen","Nama penerima","Bendahara cabang")+
@@ -1427,6 +1463,7 @@ function baRefresh(){baFill();
  const on=!!selDoj&&data.some(p=>((p.dojo||"").trim()||"(Tanpa dojo)").toLowerCase()===selDoj);$("secBADoj").hidden=!on;
  if(on){const d=findDojo(selDoj);$("baTD").textContent="Berita acara dojo "+(d?d.nama:selDoj)}}
 ["baFA","baFW"].forEach(id=>{const h=e=>{const k=e.target.dataset.k;if(!k)return;baS()[k]=e.target.value;save();baRefresh()};$(id).addEventListener("input",h);$(id).addEventListener("change",h)});
+$("baAllZ").onclick=baAllDojo;
 $("baPA").onclick=()=>baPrint(baModel(""));$("baDA").onclick=()=>baSave(baModel(""));
 $("baPD").onclick=()=>{if(selDoj)baPrint(baModel(selDoj))};$("baDD").onclick=()=>{if(selDoj)baSave(baModel(selDoj))};
 {const r0=render,d0=renderDet;render=function(){r0.apply(this,arguments);baRefresh()};renderDet=function(){d0.apply(this,arguments);baRefresh()}}
@@ -1719,10 +1756,12 @@ $("mtNil").onclick=$("gtNil").onclick=()=>dlNilai();
 async function getDl(){
  try{if(window.claude&&typeof window.claude.use==="function"){const d=await window.claude.use("downloads");if(d)return d}}catch(e){}
  return{save:async({filename,data})=>{
-  const mime=/\.xlsx$/i.test(filename)?"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":/\.pdf$/i.test(filename)?"application/pdf":/\.json$/i.test(filename)?"application/json":"application/octet-stream";
+  const mime=/\.xlsx$/i.test(filename)?"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":/\.pdf$/i.test(filename)?"application/pdf":/\.json$/i.test(filename)?"application/json":/\.zip$/i.test(filename)?"application/zip":"application/octet-stream";
   const b=data instanceof Blob?data:new Blob([data],{type:mime}),u=URL.createObjectURL(b),a=document.createElement("a");
   a.href=u;a.download=filename;a.style.display="none";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),10000);return{status:"saved"}}}
 }
+// Tingkat Tujuan otomatis dari Tingkat Sekarang: Kyu 7 (Putih)->Kyu 6 (Kuning)->...->Kyu 1 (Cokelat). Rumus IF bertingkat agar jalan di semua aplikasi spreadsheet.
+function lvFormula(i,LV){const c="TRIM(F"+i+")";let f='""';for(let k=LV.length-2;k>=0;k--)f='IF('+c+'="'+LV[k]+'","'+LV[k+1]+'",'+f+')';return'IF('+c+'="","",'+f+')'}
 const HEAD=["Nama","Dojo","Wilayah","Tempat Lahir","Tanggal Lahir","Tingkat Sekarang","Tingkat Tujuan"];
 const tglOut=t=>/^\d{4}-\d{2}-\d{2}$/.test(t||"")?t.slice(8)+"-"+t.slice(5,7)+"-"+t.slice(0,4):(t||"");
 async function buildXlsxDropdown(rows,withDojo){
@@ -1732,8 +1771,8 @@ async function buildXlsxDropdown(rows,withDojo){
  ws.getRow(1).font={bold:true};ws.getRow(1).fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFFDE8EB"}};ws.views=[{state:"frozen",ySplit:1}];
  rows.forEach(r=>ws.addRow(r));
  ws.getColumn(5).numFmt="@";
- const wl2=wb.addWorksheet("Daftar Tingkat");wl2.columns=[{header:"Urutan tingkat (Tingkat Tujuan = baris berikutnya)",width:44}];wl2.getRow(1).font={bold:true};LV.forEach(x=>wl2.addRow([x]));wb.calcProperties={fullCalcOnLoad:true};
- const lvF=i=>'IF(F'+i+'="","",IFERROR(INDEX(\'Daftar Tingkat\'!$A$2:$A$'+(LV.length+1)+',MATCH(F'+i+',\'Daftar Tingkat\'!$A$2:$A$'+(LV.length+1)+',0)+1),""))';
+ const wl2=wb.addWorksheet("Daftar Tingkat");wl2.columns=[{header:"Tingkat Sekarang",width:26},{header:"Tingkat Tujuan (otomatis)",width:28}];wl2.getRow(1).font={bold:true};LV.forEach((x,k)=>wl2.addRow([x,LV[k+1]||""]));wb.calcProperties={fullCalcOnLoad:true};
+ const lvF=i=>lvFormula(i,LV);
  if(withDojo){const w2=wb.addWorksheet("Daftar Dojo");w2.columns=[{header:"Dojo terdaftar (pilih di kolom Dojo)",width:44},{header:"Wilayah",width:22},{header:"Pelatih",width:22}];w2.getRow(1).font={bold:true};dojos.forEach(d=>w2.addRow([d.nama,d.wilayah||"",d.pelatih||""]))}
  let wd=null;if(withDojo){const wl=[...wilReg().values()].sort((a,b)=>a.localeCompare(b));if(wl.length){const w3=wb.addWorksheet("Daftar Wilayah");w3.columns=[{header:"Wilayah terdaftar (pilih di kolom Wilayah)",width:44}];w3.getRow(1).font={bold:true};wl.forEach(n=>w3.addRow([n]));wd={type:"list",allowBlank:true,formulae:["'Daftar Wilayah'!$A$2:$A$"+(wl.length+1)],showErrorMessage:true,errorStyle:"stop",errorTitle:"Wilayah tidak terdaftar",error:"Pilih wilayah dari daftar. Wilayah baru hanya bisa ditambah di menu Wilayah.",showInputMessage:true,promptTitle:"Wilayah",prompt:"Boleh dikosongkan (otomatis mengikuti dojo)."}}}
  const N=1000,lv={type:"list",allowBlank:true,formulae:['"'+LV.join(",")+'"'],showErrorMessage:true,errorStyle:"stop",errorTitle:"Tingkat tidak valid",error:"Pilih salah satu tingkat dari daftar.",showInputMessage:true,promptTitle:"Tingkat",prompt:"Klik tanda panah untuk memilih."};
@@ -1749,7 +1788,9 @@ async function saveXlsx(rows,name,withDojo){
   if(!buf){
    if(typeof XLSX==="undefined"){msg("Library Excel gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.",1);return}
    const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([HEAD].concat(rows));
-   ws["!cols"]=[{wch:30},{wch:24},{wch:20},{wch:20},{wch:16},{wch:22},{wch:22}];XLSX.utils.book_append_sheet(wb,ws,"Peserta");
+   ws["!cols"]=[{wch:30},{wch:24},{wch:20},{wch:20},{wch:16},{wch:22},{wch:22}];
+   {const LV=lvList();for(let i=2;i<=1000;i++){const a="G"+i;if(!ws[a]||ws[a].v===""||ws[a].v==null)ws[a]={t:"s",f:lvFormula(i,LV),v:""}}ws["!ref"]="A1:G1000"}
+   XLSX.utils.book_append_sheet(wb,ws,"Peserta");
    if(withDojo){const w2=XLSX.utils.aoa_to_sheet([["Dojo terdaftar (isi kolom Dojo persis seperti ini)","Wilayah","Pelatih"]].concat(dojos.map(d=>[d.nama,d.wilayah||"",d.pelatih||""])));w2["!cols"]=[{wch:44},{wch:22},{wch:22}];XLSX.utils.book_append_sheet(wb,w2,"Daftar Dojo")}
    buf=XLSX.write(wb,{type:"array",bookType:"xlsx"});
   }
@@ -1757,10 +1798,12 @@ async function saveXlsx(rows,name,withDojo){
  }catch(e){if(!e||e.code!=="declined")msg("File gagal dibuat/disimpan.",1)}
 }
 function tplLink(u){u=String(u||"").trim();if(!/^https:\/\//i.test(u))return"";let m=u.match(/drive\.google\.com\/file\/d\/([\w-]+)/)||(/drive\.google\.com/.test(u)&&u.match(/[?&]id=([\w-]+)/));if(m)return"https://drive.google.com/uc?export=download&id="+m[1];m=u.match(/docs\.google\.com\/spreadsheets\/d\/([\w-]+)/);if(m)return"https://docs.google.com/spreadsheets/d/"+m[1]+"/export?format=xlsx";return u}
-$("tplBtn").onclick=()=>{
+$("tplDrv").onclick=()=>{
  const u=tplLink(info.tpl);
- if(u){const a=document.createElement("a");a.href=u;a.target="_blank";a.rel="noopener noreferrer";document.body.appendChild(a);a.click();a.remove();msg("Template dibuka dari Google Drive. Jika tidak terunduh, buka tautan ini di browser: "+u);return}
- saveXlsx([["Contoh Nama Peserta",(dojos[0]&&dojos[0].nama)||"Nama Dojo",(dojos[0]&&dojos[0].wilayah)||"Kabupaten Bogor","Bogor","31-12-2010","Kyu 7 (Putih)","Kyu 6 (Kuning)"]],"Template_Peserta_Ujian_BKC.xlsx",true)
+ if(u){const a=document.createElement("a");a.href=u;a.target="_blank";a.rel="noopener noreferrer";document.body.appendChild(a);a.click();a.remove();msg("Template dibuka dari Google Drive. Jika tidak terunduh, buka tautan ini di browser: "+u)}
+};
+$("tplBtn").onclick=()=>{
+ saveXlsx([["Contoh Nama Peserta",(dojos[0]&&dojos[0].nama)||"Nama Dojo",(dojos[0]&&dojos[0].wilayah)||"Kabupaten Bogor","Bogor","31-12-2010","Kyu 7 (Putih)",""]],"Template_Peserta_Ujian_BKC.xlsx",true)
 };
 $("expBtn").onclick=()=>{if(!data.length){msg("Belum ada data peserta untuk diekspor.",1);return}saveXlsx(data.map(p=>[p.nama,p.dojo,p.wilayah||"",p.tmp||"",tglOut(p.tgl),p.dari,p.ke]),"Data_Peserta_Ujian_BKC.xlsx",true)};
 $("xlRow").hidden=false;
