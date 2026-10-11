@@ -334,8 +334,7 @@ textarea{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:
 <button class="p" id="pick" type="button">Pilih file</button>
 <input type="file" id="file" accept=".xlsx,.xls,.csv" hidden></div>
 <div class="row" id="xlRow" style="margin-top:8px" hidden><button class="s" id="tplBtn" type="button">Unduh Template Excel</button> <button class="s" id="expBtn" type="button">Ekspor Data Peserta (format sama)</button></div>
-<p class="hint">Baris pertama harus berisi judul kolom: <b>Nama</b>, <b>Dojo</b> (boleh dikosongkan, otomatis memakai dojo yang dipilih di atas), <b>Wilayah</b>, <b>Tempat Lahir</b>, <b>Tanggal Lahir</b>, <b>Tingkat Sekarang</b>, <b>Tingkat Tujuan</b>. Format tanggal: 31-12-2010 (hari-bulan-tahun). Template Excel dari tombol di bawah sudah memakai pilihan (dropdown) untuk Dojo, Tingkat Sekarang, dan Tingkat Tujuan agar tidak salah ketik. Dojo harus sudah terdaftar di menu Administrator; Jika kolom Wilayah kosong, wilayah diisi dari data dojo; Pelatih selalu diisi otomatis dari data dojo. Baris yang kolom Dojo-nya berbeda dengan dojo yang dipilih di atas ditolak. Biaya ujian dan status pembayaran diatur per dojo di menu Administrator. Contoh: <i>Kyu 7 (Putih)</i> ke <i>Kyu 6 (Kuning)</i>.</p>
-<div class="row" style="margin-top:8px"><label class="row" style="margin:0"><input type="checkbox" id="append" style="width:auto"> Tambahkan ke data yang sudah ada (tanpa ini, data lama milik dojo yang dipilih diganti)</label></div>
+<p class="hint">Baris pertama harus berisi judul kolom: <b>Nama</b>, <b>Dojo</b> (boleh dikosongkan, otomatis memakai dojo yang dipilih di atas), <b>Wilayah</b>, <b>Tempat Lahir</b>, <b>Tanggal Lahir</b>, <b>Tingkat Sekarang</b>, <b>Tingkat Tujuan</b>. Format tanggal: 31-12-2010 (hari-bulan-tahun). Template Excel dari tombol di bawah sudah memakai pilihan (dropdown) untuk Dojo, Tingkat Sekarang, dan Tingkat Tujuan agar tidak salah ketik. Dojo harus sudah terdaftar di menu Administrator; Tingkat Tujuan otomatis mengikuti Tingkat Sekarang (mis. Kyu 7 (Putih) menjadi Kyu 6 (Kuning)); bila kosong, sistem mengisinya sendiri. Jika kolom Wilayah kosong, wilayah diisi dari data dojo. Wilayah di file hanya dipakai jika sudah terdaftar di menu Wilayah (pilih dari dropdown di template); isian lain seperti angka "1" diabaikan dan memakai wilayah dojo, karena wilayah baru hanya bisa ditambah di menu Wilayah; Pelatih selalu diisi otomatis dari data dojo. Baris yang kolom Dojo-nya berbeda dengan dojo yang dipilih di atas ditolak. Nama yang sama dianggap satu orang: tidak akan dobel, baris kembar di file digabung, dan peserta yang namanya sudah ada otomatis diperbarui dengan isian terbaru dari file (tempat/tanggal lahir, tingkat, wilayah); nama tidak berubah, sel kosong tidak menghapus data lama, dan peserta lain di dojo tidak ikut terhapus. Biaya ujian dan status pembayaran diatur per dojo di menu Administrator. Contoh: <i>Kyu 7 (Putih)</i> ke <i>Kyu 6 (Kuning)</i>.</p>
 <div id="msg" role="status"></div>
 <div class="row" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)"><span class="hint" style="margin:0">Hanya satu atau dua peserta? Isi lewat formulir.</span><button id="addMan" type="button" style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Tambah Peserta Secara Manual</button></div>
 </section>
@@ -1214,7 +1213,7 @@ function popup(title,rows,note,err){$("pIc").className="pic"+(err?" e":"");$("pI
  $("popup").hidden=false;$("pOk").focus()}
 let lastUp=null,scrollNew=false;
 function renderBaru(){const u=lastUp,box=$("secBaru");box.hidden=!u;if(!u)return;
- $("bInfo").innerHTML=`Dojo <b>${esc(u.dojo)}</b> | Pengupload <b>${esc(u.nama)}</b> | File <b>${esc(u.file)}</b> | ${esc(fWaktu(u.tgl))}<br>${u.rows.length} peserta terbaca dari file${u.nb?`, ${u.nb} baris ditolak`:""}. Periksa daftar di bawah; kalau ada yang kurang atau salah, perbaiki file lalu upload ulang (tanpa mencentang "Tambahkan ke data yang sudah ada" agar tidak dobel).`;
+ $("bInfo").innerHTML=`Dojo <b>${esc(u.dojo)}</b> | Pengupload <b>${esc(u.nama)}</b> | File <b>${esc(u.file)}</b> | ${esc(fWaktu(u.tgl))}<br>${u.rows.length} peserta terbaca dari file${u.nb?`, ${u.nb} baris ditolak`:""}. Periksa daftar di bawah; kalau ada yang kurang atau salah, perbaiki file lalu upload ulang.`;
  $("bSt").innerHTML=u.st==="ok"?'<span class="b l">Tersimpan di database</span>':u.st==="wait"?'<span class="b u">Belum seluruhnya terkirim, dicoba lagi otomatis</span>':u.st==="local"?'<span class="b u">Tersimpan di perangkat ini</span>':'<span class="b u">Mengirim ke database…</span>';
  $("bTb").innerHTML=u.rows.map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nama)}</td><td>${esc(ttl(p))}</td><td>${esc(p.dari)}</td><td>${esc(p.ke)}</td></tr>`).join("")}
 $("bClose").onclick=()=>{lastUp=null;renderBaru()};
@@ -1232,6 +1231,15 @@ function upMeta(){const dj=$("uDojo").value,nm=$("uNama").value.trim();
  if(!nm){msg("Isi nama pengupload dulu sebelum memilih file.",1);$("uNama").focus();return null}
  msg("");return{dojo:dj,nama:nm}}
 function b64(buf){const u=new Uint8Array(buf);let s="";for(let i=0;i<u.length;i+=32768)s+=String.fromCharCode.apply(null,u.subarray(i,i+32768));return btoa(s)}
+const wkN=s=>String(s||"").replace(/\s+/g," ").trim().toLowerCase();
+// wilayah terdaftar = dari menu Wilayah dan data dojo saja (tidak dari isian peserta), supaya import tidak bisa menambah wilayah baru
+function wilReg(){const m=new Map(),add=n=>{n=String(n||"").replace(/\s+/g," ").trim();if(n&&!m.has(wkN(n)))m.set(wkN(n),n)};(info.wilayah||[]).forEach(w=>add(w.nama));dojos.forEach(d=>add(d.wilayah));return m}
+// samakan tulisan tingkat dengan daftar resmi (mis. "kyu 7" / "Kyu7 putih" -> "Kyu 7 (Putih)"), dan cari tingkat berikutnya
+function lvCanon(v){const t=String(v||"").trim();if(!t)return"";const L=lvList(),n=x=>String(x).toLowerCase().replace(/[^a-z0-9]/g,"");
+ let h=L.find(x=>n(x)===n(t));if(h)return h;
+ const m=t.match(/kyu\s*[-.]?\s*(\d+)/i);if(m){h=L.find(x=>{const q=x.match(/kyu\s*(\d+)/i);return q&&q[1]===m[1]});if(h)return h}
+ return t}
+function lvNext(v){const L=lvList(),i=L.indexOf(v);return i>=0&&i+1<L.length?L[i+1]:""}
 function importFile(f){
  if(!f)return;
  const meta=upMeta();if(!meta)return;
@@ -1242,7 +1250,7 @@ function importFile(f){
   try{
    const buf=e.target.result,wb=XLSX.read(buf,{type:"array",cellDates:true});
    const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:""});
-   const out=[],bad=new Set();let nb=0;
+   const out=[],bad=new Set(),wrg=wilReg(),wBad=new Set();let nb=0,wNo=0,kAuto=0;
    rows.forEach(row=>{
     const m={};
     Object.keys(row).forEach(h=>{const n=norm(h);for(const k in ALIAS)if(m[k]===undefined&&ALIAS[k].includes(n))m[k]=row[h]});
@@ -1250,29 +1258,45 @@ function importFile(f){
     let tmp=String(m.tmp||"").trim(),tgl=parseTgl(m.tgl);if(m.ttl&&!tmp&&!tgl){const z=String(m.ttl),i=z.indexOf(",");tmp=i>=0?z.slice(0,i).trim():"";tgl=parseTgl(i>=0?z.slice(i+1).trim():z)}
     const dn=String(m.dojo||"").trim();
     if(dn&&dn.toLowerCase()!==dj0.nama.toLowerCase()){nb++;bad.add(dn);return}
-    out.push({id:Date.now()+Math.random().toString(36).slice(2,8),nama:String(m.nama).trim(),dojo:dj0.nama,wilayah:String(m.wilayah||"").trim()||dj0.wilayah,pelatih:dj0.pelatih,tmp:tmp,tgl:tgl,dari:String(m.dari||"").trim(),ke:String(m.ke||"").trim()});
+    const dari=lvCanon(m.dari),ke0=lvCanon(m.ke),ke=ke0||lvNext(dari);if(!ke0&&ke)kAuto++;
+    const wr=String(m.wilayah||"").trim(),wrc=wr?(wrg.get(wkN(wr))||""):"";if(wr&&!wrc){wNo++;wBad.add(wr)}
+    out.push({id:Date.now()+Math.random().toString(36).slice(2,8),nama:String(m.nama).trim(),dojo:dj0.nama,wilayah:wrc||dj0.wilayah,_wx:wrc,pelatih:dj0.pelatih,tmp:tmp,tgl:tgl,dari:dari,ke:ke});
    });
-   const add=$("append").checked,seen=new Map();let dEx=0,dFile=0;
-   if(add){const k0=dj0.nama.toLowerCase();data.forEach(p=>{if((p.dojo||"").trim().toLowerCase()===k0)dupCheck(seen,p,true)})}
-   out.splice(0,out.length,...out.filter(p=>{const r=dupCheck(seen,p,false);if(r==="ada")dEx++;else if(r==="file")dFile++;return !r}));
-   const dobel=dEx+dFile,ok=out.length>0,allDup=!ok&&dobel>0,upId=Date.now()+Math.random().toString(36).slice(2,8),upTgl=new Date().toISOString();
+   // Nama yang sama (huruf besar/kecil, spasi, tanda baca, aksen diabaikan) dianggap satu orang.
+   // 1) baris kembar di dalam file digabung jadi satu; 2) nama yang sudah ada di dojo ini TIDAK ditambah lagi,
+   // tetapi datanya diperbarui dengan isian terbaru dari file. Nama tidak diubah, sel kosong tidak menghapus data lama.
+   const add=true,MF=["tmp","tgl","dari","ke"],nk=p=>{const n=normN(p.nama).normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/ /g,"");return n||String(p.nama).trim().toLowerCase()};
+   const fm=new Map(),fo=[];let dFile=0;
+   out.forEach(p=>{const k=nk(p),h=fm.get(k);if(h){dFile++;MF.forEach(f=>{if(p[f])h[f]=p[f]});if(p._wx){h._wx=p._wx;h.wilayah=p._wx}}else{fm.set(k,p);fo.push(p)}});
+   const ex=new Map(),kd=dj0.nama.toLowerCase();
+   if(add)data.forEach(p=>{if((p.dojo||"").trim().toLowerCase()===kd){const k=nk(p);if(!ex.has(k))ex.set(k,p)}});
+   const nw=[],upd=[],chg=new Map();let same=0;
+   fo.forEach(p=>{const h=add?ex.get(nk(p)):null;
+    if(!h){nw.push(p);return}
+    const c={};MF.forEach(f=>{if(p[f]&&p[f]!==h[f])c[f]=p[f]});if(p._wx&&p._wx!==h.wilayah)c.wilayah=p._wx;
+    if(Object.keys(c).length){chg.set(h.id,c);upd.push({...h,...c})}else same++});
+   fo.forEach(p=>{delete p._wx});
+   out.splice(0,out.length,...nw);
+   const kTxt=kAuto?" "+kAuto+" peserta Tingkat Tujuannya kosong dan diisi otomatis sesuai Tingkat Sekarang.":"";
+   const wTxt=wNo?" "+wNo+" baris menulis wilayah yang belum terdaftar ("+[...wBad].slice(0,5).join(", ")+"), jadi memakai wilayah dari dojo. Wilayah baru hanya bisa ditambah di menu Wilayah.":"";
+   const dobel=dFile+same,ok=out.length>0||upd.length>0,allDup=!ok&&dobel>0,upId=Date.now()+Math.random().toString(36).slice(2,8),upTgl=new Date().toISOString();
     out.forEach(p=>{p.upId=upId;p.upNama=meta.nama;p.upFile=f.name;p.upTgl=upTgl});
-   uploads.push({id:upId,tgl:upTgl,dojo:dj0.nama,nama:meta.nama,file:f.name,ukuran:f.size,masuk:out.length,ditolak:nb,mode:add?"tambah":"ganti",status:ok?"berhasil":allDup?"duplikat":"gagal",dobel:dobel,fileData:f.size<=1048576?b64(buf):""});
+   uploads.push({id:upId,tgl:upTgl,dojo:dj0.nama,nama:meta.nama,file:f.name,ukuran:f.size,masuk:out.length,diperbarui:upd.length,ditolak:nb,mode:add?"tambah":"ganti",status:ok?"berhasil":allDup?"duplikat":"gagal",dobel:dobel,fileData:f.size<=1048576?b64(buf):""});
    try{localStorage.setItem("karate_upnama",meta.nama)}catch(x){}
-   if(ok){const kk=dj0.nama.toLowerCase();data=add?data.concat(out):data.filter(p=>(p.dojo||"").toLowerCase()!==kk).concat(out)}
+   if(ok){const kk=dj0.nama.toLowerCase();data=add?data.map(x=>chg.has(x.id)?{...x,...chg.get(x.id)}:x).concat(out):data.filter(p=>(p.dojo||"").toLowerCase()!==kk).concat(out)}
    save();render();
    const badTxt=[...bad].slice(0,5).join(", ");
-   if(ok){const lu=lastUp={dojo:dj0.nama,nama:meta.nama,file:f.name,tgl:new Date().toISOString(),rows:out.map(p=>({...p})),nb,st:"busy"};scrollNew=true;renderBaru();
+   if(ok){const lu=lastUp={dojo:dj0.nama,nama:meta.nama,file:f.name,tgl:new Date().toISOString(),rows:out.concat(upd).map(p=>({...p})),nb,st:"busy"};scrollNew=true;renderBaru();
     if(window.Cloud)Cloud.flush().then(r=>{lu.st=r===true?"ok":r===false?"wait":"local";renderBaru()},()=>{lu.st="wait";renderBaru()});else{lu.st="local";renderBaru()}}
-   if(allDup){const t="Tidak ada data baru: semua "+dobel+" peserta di file ini sudah ada"+(dEx?" di dojo "+dj0.nama:"")+", jadi tidak dimasukkan lagi.";
+   if(allDup){const t="Tidak ada data baru: semua peserta di file ini sudah ada di dojo "+dj0.nama+" dengan data yang sama ("+dobel+" baris), jadi tidak dimasukkan lagi.";
     msg(t,0);popup("Data sudah ada",[["Nama dojo",dj0.nama],["Pengupload",meta.nama],["File",f.name],["Peserta baru","0"],["Dilewati (data sama)",String(dobel)]],"Semua peserta di file ini sudah pernah masuk, jadi tidak ditambahkan lagi. Cek daftar peserta untuk memastikan.",false);return}
    if(!ok){
     const t=nb?"Import dibatalkan: kolom Dojo di file ("+badTxt+") berbeda dengan dojo yang dipilih ("+dj0.nama+").":"Tidak ada baris peserta terbaca. Pastikan baris pertama berisi judul kolom dan ada kolom Nama.";
     msg(t,1);popup("Import gagal",[["Dojo",dj0.nama],["Pengupload",meta.nama],["File",f.name]],t,true);return}
-   const t=out.length+" peserta dari "+f.name+" berhasil diimport ke dojo "+dj0.nama+"."+(nb?" "+nb+" baris ditolak karena kolom Dojo berbeda dari dojo yang dipilih: "+badTxt+".":"");
-   msg(t+(dobel?" "+dobel+" baris dilewati karena datanya sama dengan yang sudah ada.":""),nb>0);
-   popup("Upload selesai",[["Nama dojo",dj0.nama],["Pengupload",meta.nama],["File",f.name],["Peserta masuk",String(out.length)]].concat(nb?[["Baris ditolak",String(nb)]]:[]).concat(dobel?[["Dilewati (data sama)",String(dobel)]]:[]).concat([["Mode",add?"Ditambahkan ke data lama":"Menggantikan data lama dojo ini"]]),
-    nb?"Baris ditolak karena kolom Dojo di file berbeda dengan dojo yang dipilih: "+badTxt+".":(dobel?dobel+" peserta dilewati karena datanya sudah ada, jadi tidak dobel. ":"")+"Data peserta sudah masuk. Daftar yang baru Anda upload ditampilkan di halaman ini untuk Anda periksa.",false);
+   const t=out.length+" peserta baru dari "+f.name+" berhasil diimport ke dojo "+dj0.nama+"."+(upd.length?" "+upd.length+" peserta yang namanya sudah ada diperbarui datanya (tidak dobel).":"")+(nb?" "+nb+" baris ditolak karena kolom Dojo berbeda dari dojo yang dipilih: "+badTxt+".":"");
+   msg(t+(dobel?" "+dobel+" baris digabung/dilewati karena namanya sama dengan data yang sudah ada.":"")+kTxt+wTxt,nb>0||wNo>0);
+   popup("Upload selesai",[["Nama dojo",dj0.nama],["Pengupload",meta.nama],["File",f.name],["Peserta baru masuk",String(out.length)]].concat(upd.length?[["Data lama diperbarui",String(upd.length)]]:[]).concat(nb?[["Baris ditolak",String(nb)]]:[]).concat(dobel?[["Digabung / tidak berubah",String(dobel)]]:[]).concat(kAuto?[["Tingkat tujuan diisi otomatis",String(kAuto)]]:[]).concat(wNo?[["Wilayah tidak dikenal (pakai wilayah dojo)",String(wNo)]]:[]).concat([["Mode","Data baru ditambah, nama yang sama diperbarui"]]),
+    nb?"Baris ditolak karena kolom Dojo di file berbeda dengan dojo yang dipilih: "+badTxt+".":(dobel+upd.length?"Nama yang sama tidak dimasukkan dua kali"+(upd.length?" (data lama diperbarui dengan isian terbaru)":"")+". ":"")+"Data peserta sudah masuk. Daftar yang baru Anda upload ditampilkan di halaman ini untuk Anda periksa."+(wNo?" Wilayah yang belum terdaftar ("+[...wBad].slice(0,5).join(", ")+") tidak dipakai; wilayah mengikuti dojo.":""),false);
   }catch(err){const t="File tidak bisa dibaca. Gunakan format .xlsx, .xls, atau .csv.";msg(t,1);popup("Import gagal",[],t,true)}
  };
  r.readAsArrayBuffer(f);
@@ -1708,10 +1732,13 @@ async function buildXlsxDropdown(rows,withDojo){
  ws.getRow(1).font={bold:true};ws.getRow(1).fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFFDE8EB"}};ws.views=[{state:"frozen",ySplit:1}];
  rows.forEach(r=>ws.addRow(r));
  ws.getColumn(5).numFmt="@";
+ const wl2=wb.addWorksheet("Daftar Tingkat");wl2.columns=[{header:"Urutan tingkat (Tingkat Tujuan = baris berikutnya)",width:44}];wl2.getRow(1).font={bold:true};LV.forEach(x=>wl2.addRow([x]));wb.calcProperties={fullCalcOnLoad:true};
+ const lvF=i=>'IF(F'+i+'="","",IFERROR(INDEX(\'Daftar Tingkat\'!$A$2:$A$'+(LV.length+1)+',MATCH(F'+i+',\'Daftar Tingkat\'!$A$2:$A$'+(LV.length+1)+',0)+1),""))';
  if(withDojo){const w2=wb.addWorksheet("Daftar Dojo");w2.columns=[{header:"Dojo terdaftar (pilih di kolom Dojo)",width:44},{header:"Wilayah",width:22},{header:"Pelatih",width:22}];w2.getRow(1).font={bold:true};dojos.forEach(d=>w2.addRow([d.nama,d.wilayah||"",d.pelatih||""]))}
+ let wd=null;if(withDojo){const wl=[...wilReg().values()].sort((a,b)=>a.localeCompare(b));if(wl.length){const w3=wb.addWorksheet("Daftar Wilayah");w3.columns=[{header:"Wilayah terdaftar (pilih di kolom Wilayah)",width:44}];w3.getRow(1).font={bold:true};wl.forEach(n=>w3.addRow([n]));wd={type:"list",allowBlank:true,formulae:["'Daftar Wilayah'!$A$2:$A$"+(wl.length+1)],showErrorMessage:true,errorStyle:"stop",errorTitle:"Wilayah tidak terdaftar",error:"Pilih wilayah dari daftar. Wilayah baru hanya bisa ditambah di menu Wilayah.",showInputMessage:true,promptTitle:"Wilayah",prompt:"Boleh dikosongkan (otomatis mengikuti dojo)."}}}
  const N=1000,lv={type:"list",allowBlank:true,formulae:['"'+LV.join(",")+'"'],showErrorMessage:true,errorStyle:"stop",errorTitle:"Tingkat tidak valid",error:"Pilih salah satu tingkat dari daftar.",showInputMessage:true,promptTitle:"Tingkat",prompt:"Klik tanda panah untuk memilih."};
  const dj=dojos.length?{type:"list",allowBlank:true,formulae:["'Daftar Dojo'!$A$2:$A$"+(dojos.length+1)],showErrorMessage:true,errorStyle:"stop",errorTitle:"Dojo tidak terdaftar",error:"Pilih dojo dari daftar (sheet Daftar Dojo).",showInputMessage:true,promptTitle:"Dojo",prompt:"Klik tanda panah untuk memilih."}:null;
- for(let i=2;i<=N;i++){ws.getCell(i,6).dataValidation=lv;ws.getCell(i,7).dataValidation=lv;if(dj&&withDojo)ws.getCell(i,2).dataValidation=dj}
+ for(let i=2;i<=N;i++){ws.getCell(i,6).dataValidation=lv;ws.getCell(i,7).dataValidation=lv;if(dj&&withDojo)ws.getCell(i,2).dataValidation=dj;if(wd)ws.getCell(i,3).dataValidation=wd;const kc=ws.getCell(i,7);if(!kc.value)kc.value={formula:lvF(i)}}
  return await wb.xlsx.writeBuffer();
 }
 async function saveXlsx(rows,name,withDojo){
@@ -1726,7 +1753,7 @@ async function saveXlsx(rows,name,withDojo){
    if(withDojo){const w2=XLSX.utils.aoa_to_sheet([["Dojo terdaftar (isi kolom Dojo persis seperti ini)","Wilayah","Pelatih"]].concat(dojos.map(d=>[d.nama,d.wilayah||"",d.pelatih||""])));w2["!cols"]=[{wch:44},{wch:22},{wch:22}];XLSX.utils.book_append_sheet(wb,w2,"Daftar Dojo")}
    buf=XLSX.write(wb,{type:"array",bookType:"xlsx"});
   }
-  await dl.save({filename:name,data:buf});msg("File "+name+" siap disimpan."+(dd?" Kolom Dojo, Tingkat Sekarang, dan Tingkat Tujuan berupa pilihan (dropdown).":" (Pilihan dropdown tidak tersedia karena library gagal dimuat.)"))
+  await dl.save({filename:name,data:buf});msg("File "+name+" siap disimpan."+(dd?" Kolom Dojo, Wilayah, Tingkat Sekarang, dan Tingkat Tujuan berupa pilihan (dropdown), dan Tingkat Tujuan terisi otomatis dari Tingkat Sekarang.":" (Pilihan dropdown tidak tersedia karena library gagal dimuat.)"))
  }catch(e){if(!e||e.code!=="declined")msg("File gagal dibuat/disimpan.",1)}
 }
 function tplLink(u){u=String(u||"").trim();if(!/^https:\/\//i.test(u))return"";let m=u.match(/drive\.google\.com\/file\/d\/([\w-]+)/)||(/drive\.google\.com/.test(u)&&u.match(/[?&]id=([\w-]+)/));if(m)return"https://drive.google.com/uc?export=download&id="+m[1];m=u.match(/docs\.google\.com\/spreadsheets\/d\/([\w-]+)/);if(m)return"https://docs.google.com/spreadsheets/d/"+m[1]+"/export?format=xlsx";return u}
